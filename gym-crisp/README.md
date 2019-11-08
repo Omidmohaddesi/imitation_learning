@@ -1,0 +1,1 @@
+The Crisp is a single agent domain featuring state and action spaces.
