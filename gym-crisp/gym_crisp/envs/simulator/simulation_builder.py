@@ -404,9 +404,19 @@ def config_agents(simulation):
     distributor.downstream_nodes.extend([wholesaler])
     wholesaler.downstream_nodes.extend([health_center])
 
-    simulation.add_agent(manufacture)
-    simulation.add_agent(distributor)
-    simulation.add_agent(wholesaler)
-    simulation.add_agent(health_center)
+    # simulation.add_agent(manufacture)
+    # simulation.add_agent(distributor)
+    # simulation.add_agent(wholesaler)
+    # simulation.add_agent(health_center)
+
+    simulation.agents.append(manufacture)
+    simulation.agents.append(distributor)
+    simulation.agents.append(wholesaler)
+    simulation.agents.append(health_center)
+
+    simulation.manufacturers.append(manufacture)
+    simulation.distributors.append(distributor)
+    simulation.distributors.append(wholesaler)
+    simulation.health_centers.append(health_center)
 
     return manufacture, distributor, wholesaler, health_center

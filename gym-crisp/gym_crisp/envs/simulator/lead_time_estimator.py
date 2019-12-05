@@ -27,7 +27,7 @@ class LeadTimeEstimator(object):
             delivered = 0.0
             ordered = 0.0
 
-            for _, history_item in self.agent.history.iteritems():
+            for _, history_item in self.agent.history.items():
 
                 # Too recent history
                 if history_item['time'] < 10 or history_item['time'] < now - self.trust_hist_length or \
@@ -60,7 +60,7 @@ class LeadTimeEstimator(object):
             delivered = 0.0
             ordered = 0.0
 
-            for _, history_item in self.agent.history.iteritems():
+            for _, history_item in self.agent.history.items():
 
                 for order in history_item['order']:
                     delivered_in_order = 0
@@ -85,7 +85,7 @@ class LeadTimeEstimator(object):
         delivered = 0.0
         ordered = 0.0
 
-        for _, history_item in self.agent.history.iteritems():
+        for _, history_item in self.agent.history.items():
 
             for order in history_item['order']:
                 delivered_in_order = 0

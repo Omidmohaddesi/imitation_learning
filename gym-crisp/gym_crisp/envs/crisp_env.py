@@ -8,8 +8,8 @@ from .simulator.decision import OrderDecision
 from .simulator.decision import ProduceDecision
 from .simulator.decision import AllocateDecision
 
-# import logging
-# logger = logging.getLogger(__name__)
+import logging
+logger = logging.getLogger(__name__)
 
 
 class CrispEnv(gym.Env):
@@ -25,13 +25,15 @@ class CrispEnv(gym.Env):
         self.role = role    # the role of the agent
         self.backlog = 0
         self.reward = 0
+        self.order = 0
+        self.total_reward = 0
         self.min_order = 0
         self.max_order = 10000
         self.action_space = spaces.Box(
-            low=self.min_order, high=self.max_order, shape=(1,), dtype=np.int64)
+            low=self.min_order, high=self.max_order, shape=(1,), dtype=np.float32)
         self.observation_space = spaces.Box(
             low=np.array([0, 0, 0, 0]), high=np.array([self.max_order, self.max_order, self.max_order, self.max_order]),
-            dtype=np.int64)
+            dtype=np.float32)
 
         self.seed()
         self.reset()
@@ -58,7 +60,7 @@ class CrispEnv(gym.Env):
         done = 0
         new_obs = self._get_obs(self.simulation.now, self.backlog)
 
-        return new_obs, reward, done, {}
+        return new_obs, reward, done, {'time': self.simulation.now}
 
     def reset(self):
         self.simulation, self.runner = simulation_builder.build_simulation_beer_game()
@@ -78,8 +80,15 @@ class CrispEnv(gym.Env):
 
     def render(self, mode='human'):
         # Render the environment to the screen
+
+        self.total_reward += self.reward
         print(f'Simulation Time: {self.simulation.now}')
+        print(f'Inventory: {self.agent.inventory_level()}')
+        print(f'Backlog: {self.backlog}')
+        print(f'Order amount: {self.order}')
         print(f'Reward: {self.reward}')
+        print(f'total reward: {self.total_reward}')
+        print('--------------------')
 
     def _reward(self, inventory, allocation, backlog):
 
@@ -145,7 +154,9 @@ class CrispEnv(gym.Env):
             'decision_name': 'order_from_ds1',
             'decision_value': int(action),
         }
+
         self.decisions.append(decision)
+        self.order = action
 
     def _parse_decisions(self):
         """ convert the game decision to simulator desicion """

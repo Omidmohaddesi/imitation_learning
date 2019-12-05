@@ -6,10 +6,10 @@ class Order(object):
         buy some drug
     """
 
-    new_id = itertools.count().next
+    new_id = next(itertools.count())
 
     def __init__(self):
-        self.id = Order.new_id()
+        self.id = Order.new_id
 
         self.src = None
         self.dst = None
