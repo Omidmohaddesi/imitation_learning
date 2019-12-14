@@ -1,25 +1,19 @@
-import os
+from dataset import CrispDataset
 import pandas as pd
 import numpy as np
 from scipy.optimize import least_squares
 import matplotlib.pyplot as plt
 
+
 expert_data_path = "C:/Users/mohaddesi.s/Documents/PycharmProjects/MyFirstProgram/crisp_game_server" \
                    "/gamette_experiments/study_1/player_state_actions/"
 
-order = pd.read_csv(os.path.join(expert_data_path, 'order_data.csv'), index_col=0)
-cost = pd.read_csv(os.path.join(expert_data_path, 'cost_data.csv'), index_col=0)
-inventory = pd.read_csv(os.path.join(expert_data_path, 'inventory_data.csv'), index_col=0)
-demand = pd.read_csv(os.path.join(expert_data_path, 'demand_data.csv'), index_col=0)
-backlog = pd.read_csv(os.path.join(expert_data_path, 'backlog_data.csv'), index_col=0)
-shipment = pd.read_csv(os.path.join(expert_data_path, 'shipments_data.csv'), index_col=0)
-
-order = order.reset_index(drop=True)
-cost = cost.reset_index(drop=True)
-inventory = inventory.reset_index(drop=True)
-demand = demand.reset_index(drop=True)
-backlog = backlog.reset_index(drop=True)
-shipment = shipment.reset_index(drop=True)
+dataset = CrispDataset(expert_data_path)
+order = dataset.order
+inventory = dataset.inventory
+demand = dataset.demand
+backlog = dataset.backlog
+shipment = dataset.shipment
 
 
 def fun(w, x, y):
@@ -71,6 +65,7 @@ plt.legend()
 
 fig2, ax2 = plt.subplots()
 ax2 = plt.plot(mean_robust, mean_y, 'o', label='robust')
+ax2 = plt.plot(mean_robust, mean_robust)
 plt.show()
 
 # plt.plot(np.array(range(1, 21)), y_train, 'o', label='data')
