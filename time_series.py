@@ -4,10 +4,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 import tensorflow as tf
 from tensorflow import keras
+from sklearn import preprocessing
+import os
 
+# Just disables the warning, doesn't enable AVX/FMA
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 # split a multivariate sequence into samples
-def split_sequences(sequences, n_steps):
+def split_sequences(sequences, n_steps, train_size):
     X, y = [], []
     for i in range(len(sequences)):
         # find the end of this pattern
@@ -19,7 +23,10 @@ def split_sequences(sequences, n_steps):
         seq_x, seq_y = sequences[i:end_ix, :-1], sequences[end_ix-1, -1]
         X.append(seq_x)
         y.append(seq_y)
-    return np.array(X, dtype=float), np.array(y, dtype=float)
+    x_train, y_train = X[:train_size], y[:train_size]
+    x_test, y_test = X[train_size:], y[train_size:]
+    return np.array(x_train, dtype=float), np.array(y_train, dtype=float), np.array(x_test, dtype=float), np.array(
+        y_test, dtype=float), np.array(X, dtype=float), np.array(y, dtype=float)
 
 
 class MyCallBack(tf.keras.callbacks.Callback):
@@ -48,53 +55,126 @@ demand = dataset.demand
 backlog = dataset.backlog
 shipment = dataset.shipment
 
+n_steps = 4
+
 dataset = pd.DataFrame(columns=['inventory', 'demand', 'backlog', 'shipment', 'order'])
-for i in range(0, 40):
+zero_matrix = pd.DataFrame(np.zeros((n_steps, 5)), columns=['inventory', 'demand', 'backlog', 'shipment', 'order'])
+
+for i in range(0, 68):
+    dataset = dataset.append(zero_matrix)
     dataset = dataset.append(pd.concat([inventory.iloc[i, 0:20], demand.iloc[i, 0:20],
                                         backlog.iloc[i, 0:20], shipment.iloc[i, 0:20], order.iloc[i, 0:20]],
                                        axis=1,
                                        keys=['inventory', 'demand', 'backlog', 'shipment', 'order']))
 
-dataset = dataset.to_numpy()
 
-n_steps = 4
-X, y = split_sequences(dataset, n_steps)
-n_features = X.shape[2]
+dataset = dataset.values.astype(int)
+dataset = tf.data.Dataset.from_tensor_slices(dataset)
+dataset = dataset.window(5, shift=1, drop_remainder=True)
+dataset = dataset.flat_map(lambda window: window.batch(5))
+dataset = dataset.map(lambda window: (window[:-1, :-1], window[-2, -1]))
 
-print(X.shape, y.shape)
+for x, y in dataset:
+    print(x.numpy(), y.numpy())
+
+'''
+# plt.plot(dataset[:, 4])
+# plt.show()
+# scaler = preprocessing.MinMaxScaler(feature_range=(0, 1))
+# dataset = scaler.fit_transform(dataset)
+n_train_period = 40 * 24
+x_train, y_train, x_test, y_test, X, y = split_sequences(dataset, n_steps, n_train_period)
+n_features = x_train.shape[2]
+
+print(x_train.shape, y_train.shape)
 
 # summarize the data
-for i in range(len(X)):
-    print(X[i], y[i])
+for i in range(len(x_train)):
+    print(x_train[i], y_train[i])
 
 callbacks = MyCallBack()
 
 # plt.plot(np.array(range(0, 797)), y)
 # plt.show()
 
-# define model
+tf.keras.backend.clear_session()
+tf.random.set_seed(51)
+np.random.seed(51)
+
+tf.keras.backend.clear_session()
+
+# define model 1
+# model = tf.keras.models.Sequential([
+#     tf.keras.layers.Dense(50, activation='relu', input_shape=(n_steps, n_features)),
+#     tf.keras.layers.Dense(50, activation='relu'),
+#     tf.keras.layers.Dense(1)
+# ])
+
+# define model 2
+# model = tf.keras.models.Sequential([
+#     tf.keras.layers.Conv1D(64, kernel_size=2, activation='relu', input_shape=(n_steps, n_features)),
+#     tf.keras.layers.MaxPooling1D(pool_size=2),
+#     tf.keras.layers.Flatten(),
+#     tf.keras.layers.Dense(50, activation='relu'),
+#     tf.keras.layers.Dense(50, activation='relu'),
+#     tf.keras.layers.Dense(1)
+# ])
+
+# define model 3
 model = tf.keras.models.Sequential([
-    tf.keras.layers.Conv1D(64, kernel_size=2, activation='relu', input_shape=(n_steps, n_features)),
-    tf.keras.layers.MaxPooling1D(pool_size=2),
-    tf.keras.layers.Flatten(),
-    tf.keras.layers.Dense(50, activation='relu'),
-    tf.keras.layers.Dense(25, activation='relu'),
+    tf.keras.layers.SimpleRNN(20, return_sequences=True, input_shape=(n_steps, n_features)),
+    tf.keras.layers.SimpleRNN(20),
     tf.keras.layers.Dense(1)
 ])
 
-model.compile(optimizer='adam',
-              loss='mse',
-              metrics=['accuracy'])
-model.summary()
-history = model.fit(X, y, epochs=1000, verbose=0, callbacks=[callbacks])
+# model.compile(optimizer='adam',
+#               loss='mae',
+#               metrics=['accuracy'])
 
-print(history.history)
+lr_schedule = tf.keras.callbacks.LearningRateScheduler(
+    lambda epoch: 1e-8 * 10**(epoch / 20))
+optimizer = tf.keras.optimizers.SGD(lr=2.5e-6, momentum=0.9)
+model.compile(optimizer=optimizer,
+              loss='mae',
+              metrics=['accuracy'])
+
+model.summary()
+history = model.fit(x_train, y_train, epochs=100, verbose=1, shuffle=False,
+                    validation_data=(x_test, y_test), callbacks=[lr_schedule])
+
+# lrs = 1e-8 * (10 ** (np.arange(500) / 20))
+# plt.semilogx(lrs, history.history['loss'])
+# plt.axis([1e-8, 1e-3, 0, 300])
+# loss = history.history['loss']
+# epochs = range(0, len(loss))
+# plot_loss = loss
+# plt.plot(epochs, plot_loss, 'b', label='Training Loss')
+#
+# plt.show()
+forecast = []
+results = []
+for i in range(len(y) - n_steps):
+    forecast.append(model.predict(X[i].reshape((1, n_steps, n_features)))[0][0])
+
+forecast = forecast[n_train_period-n_steps:]
+results = np.array(forecast)
+
+plt.plot(y_test)
+plt.plot(results)
+plt.show()
+
+print(tf.keras.metrics.mean_absolute_error(y_test, results).numpy())
+
+
+# print(history.history)
 
 # model.evaluate(X[16].reshape((1, n_steps, n_features)), y[16])
 
-y_hat = []
-for i in range(0, 797):
-    y_hat.append(model.predict(X[i].reshape((1, n_steps, n_features)))[0][0])
+# y_hat = []
+# for i in range(0, 17):
+#     y_hat.append(model.predict(x_train[i].reshape((1, n_steps, n_features)))[0][0])
 
-plt.plot(y_hat, y, 'o')
-plt.show()
+# plt.plot(y_hat, y_train, 'o')
+# plt.show()
+
+'''
