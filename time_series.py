@@ -6,9 +6,11 @@ import tensorflow as tf
 from tensorflow import keras
 from sklearn import preprocessing
 import os
+from random import shuffle
 
 # Just disables the warning, doesn't enable AVX/FMA
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+
 
 # split a multivariate sequence into samples
 def split_sequences(sequences, n_steps, train_size):
@@ -40,7 +42,7 @@ def windowed_dataset(series, window_size, batch_size, shuffle_buffer):
     dataset = tf.data.Dataset.from_tensor_slices(series)
     dataset = dataset.window(window_size + 1, shift=1, drop_remainder=True)
     dataset = dataset.flat_map(lambda window: window.batch(window_size + 1))
-    dataset = dataset.shuffle(shuffle_buffer).map(lambda window: (window[:-1], window[-1]))
+    dataset = dataset.shuffle(shuffle_buffer).map(lambda window: (window[:-1, :-1], window[-2, -1]))
     dataset = dataset.batch(batch_size).prefetch(1)
     return dataset
 
@@ -48,49 +50,55 @@ def windowed_dataset(series, window_size, batch_size, shuffle_buffer):
 expert_data_path = "C:/Users/mohaddesi.s/Documents/PycharmProjects/MyFirstProgram/crisp_game_server" \
                    "/gamette_experiments/study_1/player_state_actions/"
 
-dataset = CrispDataset(expert_data_path)
-order = dataset.order
-inventory = dataset.inventory
-demand = dataset.demand
-backlog = dataset.backlog
-shipment = dataset.shipment
+series = CrispDataset(expert_data_path)
+order = series.order
+inventory = series.inventory
+demand = series.demand
+backlog = series.backlog
+shipment = series.shipment
 
 n_steps = 4
 
-dataset = pd.DataFrame(columns=['inventory', 'demand', 'backlog', 'shipment', 'order'])
-zero_matrix = pd.DataFrame(np.zeros((n_steps, 5)), columns=['inventory', 'demand', 'backlog', 'shipment', 'order'])
+series = pd.DataFrame(columns=['inventory', 'demand', 'backlog', 'shipment', 'order'])
+zero_matrix = pd.DataFrame(np.zeros((10, 5)), columns=['inventory', 'demand', 'backlog', 'shipment', 'order'])
 
-for i in range(0, 68):
-    dataset = dataset.append(zero_matrix)
-    dataset = dataset.append(pd.concat([inventory.iloc[i, 0:20], demand.iloc[i, 0:20],
-                                        backlog.iloc[i, 0:20], shipment.iloc[i, 0:20], order.iloc[i, 0:20]],
-                                       axis=1,
-                                       keys=['inventory', 'demand', 'backlog', 'shipment', 'order']))
+expert_id = list(range(0, 68))
+# shuffle(expert_id)
+for i in expert_id:
+    series = series.append(zero_matrix)
+    series = series.append(pd.concat([inventory.iloc[i, 0:20], demand.iloc[i, 0:20],
+                                      backlog.iloc[i, 0:20], shipment.iloc[i, 0:20], order.iloc[i, 0:20]],
+                                      axis=1,
+                                      keys=['inventory', 'demand', 'backlog', 'shipment', 'order']))
 
+series = series.values.astype(int)
 
-dataset = dataset.values.astype(int)
-dataset = tf.data.Dataset.from_tensor_slices(dataset)
-dataset = dataset.window(5, shift=1, drop_remainder=True)
-dataset = dataset.flat_map(lambda window: window.batch(5))
-dataset = dataset.map(lambda window: (window[:-1, :-1], window[-2, -1]))
+split_time = 50 * 30
+x_train = series[:split_time, :-1]
+y_train = series[:split_time, -1]
+x_test = series[split_time:, :-1]
+y_test = series[split_time:, -1]
 
-for x, y in dataset:
-    print(x.numpy(), y.numpy())
+window_size = 4
+batch_size = 100
+shuffle_buffer = 10
 
-'''
 # plt.plot(dataset[:, 4])
 # plt.show()
 # scaler = preprocessing.MinMaxScaler(feature_range=(0, 1))
 # dataset = scaler.fit_transform(dataset)
-n_train_period = 40 * 24
-x_train, y_train, x_test, y_test, X, y = split_sequences(dataset, n_steps, n_train_period)
-n_features = x_train.shape[2]
+# n_train_period = 40 * 24
+# x_train, y_train, x_test, y_test, X, y = split_sequences(dataset, n_steps, n_train_period)
+# n_features = x_train.shape[2]
 
-print(x_train.shape, y_train.shape)
+dataset = windowed_dataset(series, window_size, batch_size, shuffle_buffer)
+n_features = dataset.element_spec[0].shape[2]
+
+# print(x_train.shape, y_train.shape)
 
 # summarize the data
-for i in range(len(x_train)):
-    print(x_train[i], y_train[i])
+# for i in range(len(x_train)):
+#     print(x_train[i], y_train[i])
 
 callbacks = MyCallBack()
 
@@ -121,11 +129,30 @@ tf.keras.backend.clear_session()
 # ])
 
 # define model 3
+# model = tf.keras.models.Sequential([
+#     tf.keras.layers.SimpleRNN(40, return_sequences=True, input_shape=(None, n_features)),
+#     tf.keras.layers.SimpleRNN(40),
+#     tf.keras.layers.Dense(1),
+#     tf.keras.layers.Lambda(lambda x: x * 100.0)
+# ])
+
+# define model 4 (MAE = 39.004642)
+# model = tf.keras.models.Sequential([
+#     tf.keras.layers.LSTM(32, return_sequences=True, input_shape=(None, n_features)),
+#     tf.keras.layers.LSTM(32),
+#     tf.keras.layers.Dense(1),
+#     tf.keras.layers.Lambda(lambda x: x * 100.0)
+# ])
+
+# define model 5 (MAE = 29.852968)
 model = tf.keras.models.Sequential([
-    tf.keras.layers.SimpleRNN(20, return_sequences=True, input_shape=(n_steps, n_features)),
-    tf.keras.layers.SimpleRNN(20),
-    tf.keras.layers.Dense(1)
+    tf.keras.layers.Conv1D(32, kernel_size=2, activation='relu', input_shape=(None, n_features)),
+    tf.keras.layers.LSTM(32, return_sequences=True),
+    tf.keras.layers.LSTM(32),
+    tf.keras.layers.Dense(1),
+    tf.keras.layers.Lambda(lambda x: x * 400.0)
 ])
+
 
 # model.compile(optimizer='adam',
 #               loss='mae',
@@ -133,16 +160,19 @@ model = tf.keras.models.Sequential([
 
 lr_schedule = tf.keras.callbacks.LearningRateScheduler(
     lambda epoch: 1e-8 * 10**(epoch / 20))
-optimizer = tf.keras.optimizers.SGD(lr=2.5e-6, momentum=0.9)
+optimizer = tf.keras.optimizers.SGD(lr=1e-5, momentum=0.9)
 model.compile(optimizer=optimizer,
               loss='mae',
-              metrics=['accuracy'])
+              # loss=tf.keras.losses.Huber(),
+              metrics=['mae'])
 
-model.summary()
-history = model.fit(x_train, y_train, epochs=100, verbose=1, shuffle=False,
-                    validation_data=(x_test, y_test), callbacks=[lr_schedule])
+# model.summary()
+# history = model.fit(x_train, y_train, epochs=100, verbose=1, shuffle=False,
+#                     validation_data=(x_test, y_test), callbacks=[lr_schedule])
 
-# lrs = 1e-8 * (10 ** (np.arange(500) / 20))
+history = model.fit(dataset, epochs=60, verbose=1, callbacks=[lr_schedule])
+
+# lrs = 1e-8 * (10 ** (np.arange(100) / 20))
 # plt.semilogx(lrs, history.history['loss'])
 # plt.axis([1e-8, 1e-3, 0, 300])
 # loss = history.history['loss']
@@ -151,12 +181,14 @@ history = model.fit(x_train, y_train, epochs=100, verbose=1, shuffle=False,
 # plt.plot(epochs, plot_loss, 'b', label='Training Loss')
 #
 # plt.show()
+
 forecast = []
 results = []
-for i in range(len(y) - n_steps):
-    forecast.append(model.predict(X[i].reshape((1, n_steps, n_features)))[0][0])
+for i in range(len(series) - n_steps):
+    # forecast.append(model.predict(dataset[i, :-1].reshape((1, n_steps, n_features)))[0][0])
+    forecast.append(model.predict(series[i:i+n_steps, :-1].reshape((1, n_steps, n_features)).astype(float))[0][0])
 
-forecast = forecast[n_train_period-n_steps:]
+forecast = forecast[split_time-n_steps:]
 results = np.array(forecast)
 
 plt.plot(y_test)
@@ -177,4 +209,3 @@ print(tf.keras.metrics.mean_absolute_error(y_test, results).numpy())
 # plt.plot(y_hat, y_train, 'o')
 # plt.show()
 
-'''
