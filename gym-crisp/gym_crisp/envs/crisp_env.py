@@ -29,8 +29,9 @@ class CrispEnv(gym.Env):
         self.total_reward = 0
         self.min_order = 0
         self.max_order = 10000
-        self.action_space = spaces.Box(
-            low=self.min_order, high=self.max_order, shape=(1,), dtype=np.float32)
+        # self.action_space = spaces.Box(
+        #     low=self.min_order, high=self.max_order, shape=(1,), dtype=np.float32)
+        self.action_space = spaces.Discrete(100)
         self.observation_space = spaces.Box(
             low=np.array([0, 0, 0, 0]), high=np.array([self.max_order, self.max_order, self.max_order, self.max_order]),
             dtype=np.float32)
@@ -82,10 +83,12 @@ class CrispEnv(gym.Env):
         # Render the environment to the screen
 
         self.total_reward += self.reward
-        print(f'Simulation Time: {self.simulation.now}')
-        print(f'Inventory: {self.agent.inventory_level()}')
+        print(f'Simulation Time: {self.simulation.now-1}')
+        # print(f'Inventory: {self.agent.inventory_level()}')
+        print(f'Inventory: {self.agent.history[self.simulation.now-1]["inventory"]}')
         print(f'Backlog: {self.backlog}')
-        print(f'Order amount: {self.order}')
+        # print(f'Order amount: {self.order}')
+        print(f'Order amount: {[0 if not self.agent.history[self.simulation.now-1]["order"] else self.agent.history[self.simulation.now-1]["order"][0].amount]}')
         print(f'Reward: {self.reward}')
         print(f'total reward: {self.total_reward}')
         print('--------------------')
