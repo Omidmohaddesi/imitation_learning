@@ -35,7 +35,7 @@ from gym_crisp.envs import CrispEnv
 
 if __name__ == '__main__':
 
-    path = "C:/Users/mohaddesi.s/Downloads/expert_cartpole.npz"
+    # path = "C:/Users/mohaddesi.s/Downloads/expert_cartpole.npz"
 
     # env = gym.make('Crisp-v0')
     # data = load('expert_cartpole.npz')
@@ -45,8 +45,7 @@ if __name__ == '__main__':
     #     print(item)
     #     print(data[item])
 
-    expert_data_path = "C:/Users/mohaddesi.s/Documents/PycharmProjects/MyFirstProgram/crisp_game_server" \
-                       "/gamette_experiments/study_1/player_state_actions/"
+    expert_data_path = "datasets/player_state_actions/"
 
     data = {'actions': np.empty((0, 1), int),
             'episode_returns': np.empty((0, 0), int),

@@ -47,8 +47,8 @@ def windowed_dataset(series, window_size, batch_size, shuffle_buffer):
     return dataset
 
 
-expert_data_path = "C:/Users/mohaddesi.s/Documents/PycharmProjects/MyFirstProgram/crisp_game_server" \
-                   "/gamette_experiments/study_1/player_state_actions/"
+expert_data_path = "datasets/player_state_actions/"
+
 
 series = CrispDataset(expert_data_path)
 order = series.order
