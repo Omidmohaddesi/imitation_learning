@@ -7,6 +7,7 @@ from tensorflow import keras
 from sklearn import preprocessing
 import os
 from random import shuffle
+import datetime
 
 # Just disables the warning, doesn't enable AVX/FMA
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
@@ -146,11 +147,12 @@ tf.keras.backend.clear_session()
 
 # define model 5 (MAE = 29.852968)
 model = tf.keras.models.Sequential([
-    tf.keras.layers.Conv1D(32, kernel_size=2, activation='relu', input_shape=(None, n_features)),
-    tf.keras.layers.LSTM(32, return_sequences=True),
-    tf.keras.layers.LSTM(32),
-    tf.keras.layers.Dense(1),
-    tf.keras.layers.Lambda(lambda x: x * 400.0)
+    tf.keras.layers.Conv1D(500, kernel_size=2, activation=tf.keras.layers.LeakyReLU(),
+                           input_shape=(None, n_features)),
+    tf.keras.layers.LSTM(500, return_sequences=True),
+    tf.keras.layers.LSTM(500),
+    tf.keras.layers.Dense(1, activation=tf.keras.layers.LeakyReLU()),
+    tf.keras.layers.Lambda(lambda x: x * 400)
 ])
 
 
@@ -164,13 +166,16 @@ optimizer = tf.keras.optimizers.SGD(lr=1e-5, momentum=0.9)
 model.compile(optimizer=optimizer,
               loss='mae',
               # loss=tf.keras.losses.Huber(),
-              metrics=['mae'])
+              metrics=['accuracy'])
 
-# model.summary()
+model.summary()
 # history = model.fit(x_train, y_train, epochs=100, verbose=1, shuffle=False,
 #                     validation_data=(x_test, y_test), callbacks=[lr_schedule])
 
-history = model.fit(dataset, epochs=60, verbose=1, callbacks=[lr_schedule])
+log_dir = "logdir"   # + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
+
+history = model.fit(dataset, epochs=65, verbose=1, callbacks=[lr_schedule, tensorboard_callback])
 
 # lrs = 1e-8 * (10 ** (np.arange(100) / 20))
 # plt.semilogx(lrs, history.history['loss'])
@@ -182,20 +187,21 @@ history = model.fit(dataset, epochs=60, verbose=1, callbacks=[lr_schedule])
 #
 # plt.show()
 
-forecast = []
-results = []
-for i in range(len(series) - n_steps):
-    # forecast.append(model.predict(dataset[i, :-1].reshape((1, n_steps, n_features)))[0][0])
-    forecast.append(model.predict(series[i:i+n_steps, :-1].reshape((1, n_steps, n_features)).astype(float))[0][0])
+# Predicting using the model
+# forecast = []
+# results = []
+# for i in range(len(series) - n_steps):
+#     # forecast.append(model.predict(dataset[i, :-1].reshape((1, n_steps, n_features)))[0][0])
+#     forecast.append(model.predict(series[i:i+n_steps, :-1].reshape((1, n_steps, n_features)).astype(float))[0][0])
+#
+# forecast = forecast[split_time-n_steps:]
+# results = np.array(forecast)
+#
+# plt.plot(y_test)
+# plt.plot(results)
+# plt.show()
 
-forecast = forecast[split_time-n_steps:]
-results = np.array(forecast)
-
-plt.plot(y_test)
-plt.plot(results)
-plt.show()
-
-print(tf.keras.metrics.mean_absolute_error(y_test, results).numpy())
+# print(tf.keras.metrics.mean_absolute_error(y_test, results).numpy())
 
 
 # print(history.history)

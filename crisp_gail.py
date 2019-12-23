@@ -24,8 +24,10 @@ import gym
 import gym_crisp
 import seaborn as sns
 import matplotlib.pyplot as plt
+import tensorflow as tf
 
-from stable_baselines import SAC, PPO2, A2C
+
+from stable_baselines import SAC, PPO2, A2C, DQN
 from stable_baselines.gail import GAIL
 from stable_baselines.gail import ExpertDataset, generate_expert_traj
 from stable_baselines.common.policies import MlpPolicy, MlpLstmPolicy, MlpLnLstmPolicy, CnnPolicy, CnnLstmPolicy, CnnLnLstmPolicy
@@ -71,8 +73,8 @@ if __name__ == '__main__':
         line_count = 0
         for row in order_data:
             elem_count = 1
-            if line_count == 0:
-            # if line_count == 0 or line_count > 1:
+            # if line_count == 0:
+            if line_count == 0 or line_count > 22:  # Only considering beerGame condition
                 line_count += 1
                 pass
             else:
@@ -88,8 +90,8 @@ if __name__ == '__main__':
 
         line_count = 0
         for row in cost_data:
-            if line_count == 0:
-            # if line_count == 0 or line_count > 1:
+            # if line_count == 0:
+            if line_count == 0 or line_count > 22:  # Only considering beerGame condition
                 line_count += 1
                 pass
             else:
@@ -100,8 +102,8 @@ if __name__ == '__main__':
 
         line_count = 0
         for row1, row2, row3, row4 in zip(inventory_data, shipments_data, demand_data, backlog_data):
-            if line_count == 0:
-            # if line_count == 0 or line_count > 1:
+            # if line_count == 0:
+            if line_count == 0 or line_count > 22:  # Only considering beerGame condition
                 line_count += 1
                 pass
             else:
@@ -121,8 +123,12 @@ if __name__ == '__main__':
     # Load the expert dataset
     dataset = ExpertDataset(expert_path='expert_data.npz', verbose=1)
 
-    model = GAIL("MlpPolicy", 'Crisp-v0', dataset, verbose=1)
+    model = GAIL("MlpPolicy", 'Crisp-v0', dataset, verbose=2,
+                 tensorboard_log='./tmp/gail/2',
+                 full_tensorboard_log=True)
+
     # Note: in practice, you need to train for 1M steps to have a working policy
+    model.pretrain(dataset, n_epochs=1000, learning_rate=1e-5, adam_epsilon=1e-08, val_interval=None)
     model.learn(total_timesteps=1000)
     params = model.get_parameters()
     model.save("gail_crisp")
@@ -148,7 +154,7 @@ if __name__ == '__main__':
     fig.set_size_inches(10, 6)
     sns.set()
     sns.set_context("paper")
-    ax = sns.lineplot(np.arange(0, 100), prob[0])
+    ax = sns.lineplot(np.arange(0, 500), prob[0])
     fig.savefig('dist.png', format='png', dpi=300)
 
 

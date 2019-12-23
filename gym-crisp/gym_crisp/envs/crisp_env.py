@@ -31,7 +31,7 @@ class CrispEnv(gym.Env):
         self.max_order = 10000
         # self.action_space = spaces.Box(
         #     low=self.min_order, high=self.max_order, shape=(1,), dtype=np.float32)
-        self.action_space = spaces.Discrete(100)
+        self.action_space = spaces.Discrete(500)
         self.observation_space = spaces.Box(
             low=np.array([0, 0, 0, 0]), high=np.array([self.max_order, self.max_order, self.max_order, self.max_order]),
             dtype=np.float32)
