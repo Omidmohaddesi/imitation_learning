@@ -8,6 +8,8 @@ from sklearn import preprocessing
 import os
 from random import shuffle
 import datetime
+from sklearn.preprocessing import MinMaxScaler
+
 
 # Just disables the warning, doesn't enable AVX/FMA
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
@@ -73,6 +75,10 @@ for i in expert_id:
                                       keys=['inventory', 'demand', 'backlog', 'shipment', 'order']))
 
 series = series.values.astype(int)
+
+# Normalize data:
+# scaler = MinMaxScaler(feature_range=(0, 1))
+# series = scaler.fit_transform(series)
 
 split_time = 50 * 30
 x_train = series[:split_time, :-1]
@@ -151,7 +157,8 @@ model = tf.keras.models.Sequential([
                            input_shape=(None, n_features)),
     tf.keras.layers.LSTM(500, return_sequences=True),
     tf.keras.layers.LSTM(500),
-    tf.keras.layers.Dense(1, activation=tf.keras.layers.LeakyReLU()),
+    tf.keras.layers.Dense(1, activation=tf.keras.layers.LeakyReLU(),
+                          bias_initializer=tf.keras.initializers.RandomUniform(minval=-0.05, maxval=0.05, seed=None)),
     tf.keras.layers.Lambda(lambda x: x * 400)
 ])
 
@@ -172,7 +179,7 @@ model.summary()
 # history = model.fit(x_train, y_train, epochs=100, verbose=1, shuffle=False,
 #                     validation_data=(x_test, y_test), callbacks=[lr_schedule])
 
-log_dir = "logdir"   # + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+log_dir = "logdir3"   # + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
 tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
 
 history = model.fit(dataset, epochs=65, verbose=1, callbacks=[lr_schedule, tensorboard_callback])

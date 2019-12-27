@@ -1,22 +1,3 @@
-# import gym
-#
-# from stable_baselines.common.policies import MlpPolicy
-# from stable_baselines.common.vec_env import DummyVecEnv
-# from stable_baselines import PPO2
-#
-# env = gym.make('CartPole-v1')
-# env = DummyVecEnv([lambda: env])  # The algorithms require a vectorized environment to run
-#
-# model = PPO2(MlpPolicy, env, verbose=1)
-# model.learn(total_timesteps=10000)
-#
-# obs = env.reset()
-# for i in range(1000):
-#     action, _states = model.predict(obs)
-#     obs, rewards, dones, info = env.step(action)
-#     env.render()
-
-from numpy import load
 import numpy as np
 import os
 import csv
@@ -28,11 +9,23 @@ import tensorflow as tf
 
 
 from stable_baselines import SAC, PPO2, A2C, DQN
+from stable_baselines.bench import Monitor
 from stable_baselines.gail import GAIL
 from stable_baselines.gail import ExpertDataset, generate_expert_traj
 from stable_baselines.common.policies import MlpPolicy, MlpLstmPolicy, MlpLnLstmPolicy, CnnPolicy, CnnLstmPolicy, CnnLnLstmPolicy
-from stable_baselines.common.vec_env import DummyVecEnv
 from gym_crisp.envs import CrispEnv
+
+
+def callback(locals_, globals_):
+    self_ = locals_['self']
+    seg_ = locals_['seg_gen'].__next__()
+    true_rewrds_ = seg_['true_rewards']
+    mask_ = seg_['dones']
+    value = sum(true_rewrds_) / sum(mask_)
+    # value = self_.episode_reward
+    summary = tf.Summary(value=[tf.Summary.Value(tag='Average_Episodes_Reward', simple_value=value)])
+    locals_['writer'].add_summary(summary, self_.num_timesteps)
+    return True
 
 
 if __name__ == '__main__':
@@ -74,7 +67,7 @@ if __name__ == '__main__':
         for row in order_data:
             elem_count = 1
             # if line_count == 0:
-            if line_count == 0 or line_count > 22:  # Only considering beerGame condition
+            if line_count == 0 or line_count > 22 or line_count in [11, 20, 12, 15]:  # Only considering beerGame condition
                 line_count += 1
                 pass
             else:
@@ -91,7 +84,7 @@ if __name__ == '__main__':
         line_count = 0
         for row in cost_data:
             # if line_count == 0:
-            if line_count == 0 or line_count > 22:  # Only considering beerGame condition
+            if line_count == 0 or line_count > 22 or line_count in [11, 20, 12, 15]:  # Only considering beerGame condition
                 line_count += 1
                 pass
             else:
@@ -103,7 +96,7 @@ if __name__ == '__main__':
         line_count = 0
         for row1, row2, row3, row4 in zip(inventory_data, shipments_data, demand_data, backlog_data):
             # if line_count == 0:
-            if line_count == 0 or line_count > 22:  # Only considering beerGame condition
+            if line_count == 0 or line_count > 22 or line_count in [11, 20, 12, 15]:  # Only considering beerGame condition
                 line_count += 1
                 pass
             else:
@@ -116,22 +109,35 @@ if __name__ == '__main__':
     #          data['obs'], data['rewards'], data['episode_starts'])
     np.savez('expert_data.npz', **data)
 
+    # Create log dir
+    log_dir = './tmp/gail/3'
+    os.makedirs(log_dir, exist_ok=True)
+
+    # Create and wrap the environment
+    env = gym.make('Crisp-v0')
+    # Logs will be saved in log_dir/monitor.csv
+    # env = Monitor(env, log_dir, allow_early_resets=True)
+
     # Generate expert trajectories (train expert)
     # model = A2C('MlpPolicy', 'Crisp-v0', verbose=1)
     # generate_expert_traj(model, 'Crisp-v0', n_timesteps=20, n_episodes=100)
 
+    # tf.debugging.set_log_device_placement(True)
+
     # Load the expert dataset
     dataset = ExpertDataset(expert_path='expert_data.npz', verbose=1)
 
-    model = GAIL("MlpPolicy", 'Crisp-v0', dataset, verbose=2,
+    model = GAIL("MlpPolicy", env, dataset, verbose=2,
                  tensorboard_log='./tmp/gail/2',
-                 full_tensorboard_log=True)
+                 full_tensorboard_log=True,
+                 timesteps_per_batch=1000,
+                 )
 
     # Note: in practice, you need to train for 1M steps to have a working policy
-    model.pretrain(dataset, n_epochs=1000, learning_rate=1e-5, adam_epsilon=1e-08, val_interval=None)
-    model.learn(total_timesteps=1000)
+    # model.pretrain(dataset, n_epochs=2000, learning_rate=1e-5, adam_epsilon=1e-08, val_interval=None)
+    model.learn(total_timesteps=60000, callback=callback)
     params = model.get_parameters()
-    model.save("gail_crisp")
+    model.save("gail_crisp_33")
 
     # del model # remove to demonstrate saving and loading
 
@@ -140,23 +146,29 @@ if __name__ == '__main__':
     env = gym.make('Crisp-v0')
     obs = env.reset()
 
-    info = {'time': 1}
+    # info = {'time': 1}
 
     prob = []
 
-    while info['time'] < 21:
+    reward_sum = 0
+    # while info['time'] < 21:
+    for _ in range(1, 1000):
         action, _states = model.predict(obs)
         prob.append(model.action_probability(obs))
-        obs, rewards, dones, info = env.step(action)
-        env.render()
+        obs, reward, done, info = env.step(action)
+        reward_sum += reward
+        # env.render()
+        if done:
+            print(f'Total reward is {reward_sum} \n')
+            reward_sum = 0
+            obs = env.reset()
 
-    fig = plt.figure()
-    fig.set_size_inches(10, 6)
-    sns.set()
-    sns.set_context("paper")
-    ax = sns.lineplot(np.arange(0, 500), prob[0])
-    fig.savefig('dist.png', format='png', dpi=300)
-
+    # fig = plt.figure()
+    # fig.set_size_inches(10, 6)
+    # sns.set()
+    # sns.set_context("paper")
+    # ax = sns.lineplot(np.arange(0, 500), prob[0])
+    # fig.savefig('dist2.png', format='png', dpi=300)
 
     # env = DummyVecEnv([lambda: CrispEnv()])
     # model = PPO2(MlpPolicy, env, verbose=1)

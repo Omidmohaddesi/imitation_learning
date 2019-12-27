@@ -9,6 +9,7 @@ from .simulator.decision import ProduceDecision
 from .simulator.decision import AllocateDecision
 
 import logging
+
 logger = logging.getLogger(__name__)
 
 
@@ -22,7 +23,7 @@ class CrispEnv(gym.Env):
         self.state = None
         self.agent = None
         self.decisions = []
-        self.role = role    # the role of the agent
+        self.role = role  # the role of the agent
         self.backlog = 0
         self.reward = 0
         self.order = 0
@@ -41,7 +42,7 @@ class CrispEnv(gym.Env):
 
     def step(self, action):
 
-        reward = self.reward    # in this version reward only depends on allocation and inventory and not the #
+        reward = self.reward  # in this version reward only depends on allocation and inventory and not the #
         # agent's action
         self._take_action(action)
         self.runner._make_decision(self.simulation.now)
@@ -58,12 +59,16 @@ class CrispEnv(gym.Env):
         self.runner._update_agents(self.simulation.now)
         self.runner._exogenous_event(self.simulation.now)
 
-        done = 0
+        done = bool(self.simulation.now >= 21)
+
         new_obs = self._get_obs(self.simulation.now, self.backlog)
 
         return new_obs, reward, done, {'time': self.simulation.now}
 
     def reset(self):
+        self.total_reward = 0
+        self.simulation = None
+        self.runner = None
         self.simulation, self.runner = simulation_builder.build_simulation_beer_game()
         self.agent = self._get_agent_by_role(self.role)
 
@@ -83,12 +88,13 @@ class CrispEnv(gym.Env):
         # Render the environment to the screen
 
         self.total_reward += self.reward
-        print(f'Simulation Time: {self.simulation.now-1}')
+        print(f'Simulation Time: {self.simulation.now - 1}')
         # print(f'Inventory: {self.agent.inventory_level()}')
-        print(f'Inventory: {self.agent.history[self.simulation.now-1]["inventory"]}')
+        print(f'Inventory: {self.agent.history[self.simulation.now - 1]["inventory"]}')
         print(f'Backlog: {self.backlog}')
         # print(f'Order amount: {self.order}')
-        print(f'Order amount: {[0 if not self.agent.history[self.simulation.now-1]["order"] else self.agent.history[self.simulation.now-1]["order"][0].amount]}')
+        print(
+            f'Order amount: {[0 if not self.agent.history[self.simulation.now - 1]["order"] else self.agent.history[self.simulation.now - 1]["order"][0].amount]}')
         print(f'Reward: {self.reward}')
         print(f'total reward: {self.total_reward}')
         print('--------------------')
