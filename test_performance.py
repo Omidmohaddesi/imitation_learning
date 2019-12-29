@@ -21,7 +21,7 @@ if __name__ == '__main__':
     prob = []
     titles = []
     x = []
-
+    '''
     observation = data['obs'][40:60, :]
     i = 1
     for obs in observation:
@@ -56,10 +56,9 @@ if __name__ == '__main__':
             reward_sum = 0
             obs = env.reset()
 
-    fig = plt.figure()
-    fig.set_size_inches(10, 6)
-    sns.set()
-    sns.set_context("paper")
-    ax = sns.lineplot(np.arange(0, 500), prob[0])
-    fig.savefig('dist3.png', format='png', dpi=300)
-    '''
+    # fig = plt.figure()
+    # fig.set_size_inches(10, 6)
+    # sns.set()
+    # sns.set_context("paper")
+    # ax = sns.lineplot(np.arange(0, 500), prob[0])
+    # fig.savefig('dist3.png', format='png', dpi=300)

@@ -16,6 +16,14 @@ from stable_baselines.common.policies import MlpPolicy, MlpLstmPolicy, MlpLnLstm
 from gym_crisp.envs import CrispEnv
 
 
+def normalize_actions(actions):
+    return -1 + (actions / 250.)
+
+
+def normalize_obs(obs):
+    return obs / 10000
+
+
 def callback(locals_, globals_):
     self_ = locals_['self']
     seg_ = locals_['seg_gen'].__next__()
@@ -104,10 +112,12 @@ if __name__ == '__main__':
                 for elem1, elem2, elem3, elem4 in zip(row1[1:-2], row2[1:-2], row3[1:-2], row4[1:-2]):
                     data['obs'] = np.append(data['obs'], [[int(elem1), int(elem2), int(elem3), int(elem4)]], axis=0)
 
+    data['actions'] = normalize_actions(data['actions'])
+    data['obs'] = normalize_obs(data['obs'])
 
     # np.savez('expert_data.npz', data['actions'], data['episode_returns'],
     #          data['obs'], data['rewards'], data['episode_starts'])
-    np.savez('expert_data.npz', **data)
+    np.savez('expert_data_normalized.npz', **data)
 
     # Create log dir
     log_dir = './tmp/gail/3'
@@ -125,10 +135,10 @@ if __name__ == '__main__':
     # tf.debugging.set_log_device_placement(True)
 
     # Load the expert dataset
-    dataset = ExpertDataset(expert_path='expert_data.npz', verbose=1)
+    dataset = ExpertDataset(expert_path='expert_data_normalized.npz', verbose=1)
 
     model = GAIL("MlpPolicy", env, dataset, verbose=2,
-                 tensorboard_log='./tmp/gail/2',
+                 tensorboard_log='./tmp/gail/3',
                  full_tensorboard_log=True,
                  timesteps_per_batch=1000,
                  )
@@ -137,7 +147,7 @@ if __name__ == '__main__':
     # model.pretrain(dataset, n_epochs=2000, learning_rate=1e-5, adam_epsilon=1e-08, val_interval=None)
     model.learn(total_timesteps=60000, callback=callback)
     params = model.get_parameters()
-    model.save("gail_crisp_33")
+    model.save("gail_crisp_normalized_1")
 
     # del model # remove to demonstrate saving and loading
 

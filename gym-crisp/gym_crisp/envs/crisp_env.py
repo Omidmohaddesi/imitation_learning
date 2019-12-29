@@ -28,14 +28,20 @@ class CrispEnv(gym.Env):
         self.reward = 0
         self.order = 0
         self.total_reward = 0
+        self.min_action = -1
+        self.max_action = 1
         self.min_order = 0
-        self.max_order = 10000
-        # self.action_space = spaces.Box(
-        #     low=self.min_order, high=self.max_order, shape=(1,), dtype=np.float32)
-        self.action_space = spaces.Discrete(500)
+        self.max_order = 1
+        self.action_space = spaces.Box(
+            low=self.min_action,
+            high=self.max_action,
+            shape=(1,),
+            dtype=np.float32)    # Normalized action space with original being [0, 500]
+        # self.action_space = spaces.Discrete(500)
         self.observation_space = spaces.Box(
-            low=np.array([0, 0, 0, 0]), high=np.array([self.max_order, self.max_order, self.max_order, self.max_order]),
-            dtype=np.float32)
+            low=np.array([0, 0, 0, 0]),
+            high=np.array([self.max_order, self.max_order, self.max_order, self.max_order]),
+            dtype=np.float32)   # In this version we consider normalized obs state with original between 0 and 10000
 
         self.seed()
         self.reset()
@@ -132,7 +138,7 @@ class CrispEnv(gym.Env):
         self.backlog = backlog
         self.decisions.append(decision)
 
-        return np.array([inventory, shipment, demand, backlog])
+        return self.normalize_obs(np.array([inventory, shipment, demand, backlog]))
 
     def _get_agent_by_role(self, role):
         #   IMPORTANT:  This part probably needs to be edited. Right now this function only returns the first agent in
@@ -157,6 +163,9 @@ class CrispEnv(gym.Env):
         return [seed]
 
     def _take_action(self, action):
+
+        # rescale action to [0 500] range for simulator:
+        action = self.rescale_action(action)
 
         decision = {
             'agent': self.agent,
@@ -248,3 +257,12 @@ class CrispEnv(gym.Env):
             print("Decision type " + agent_decision['decision_name']
                   + " not supported!\n")
             return
+
+    @staticmethod
+    def rescale_action(action):
+        return int((action + 1) * 250)
+
+    @staticmethod
+    def normalize_obs(obs):
+        return obs / 10000
+
