@@ -40,6 +40,8 @@ if __name__ == '__main__':
     #     print(item)
     #     print(data[item])
 
+    rows_to_ignore = [11, 20, 12, 15]   # clusters to remove
+
     expert_data_path = "datasets/player_state_actions/"
 
     data = {'actions': np.empty((0, 1), int),
@@ -67,7 +69,7 @@ if __name__ == '__main__':
         for row in order_data:
             elem_count = 1
             # if line_count == 0:
-            if line_count == 0 or line_count > 22 or line_count in [11, 20, 12, 15]:  # Only considering beerGame condition
+            if line_count == 0 or line_count > 22 or line_count in rows_to_ignore:  # Only considering beerGame condition
                 line_count += 1
                 pass
             else:
@@ -84,7 +86,7 @@ if __name__ == '__main__':
         line_count = 0
         for row in cost_data:
             # if line_count == 0:
-            if line_count == 0 or line_count > 22 or line_count in [11, 20, 12, 15]:  # Only considering beerGame condition
+            if line_count == 0 or line_count > 22 or line_count in rows_to_ignore:  # Only considering beerGame condition
                 line_count += 1
                 pass
             else:
@@ -96,7 +98,7 @@ if __name__ == '__main__':
         line_count = 0
         for row1, row2, row3, row4 in zip(inventory_data, shipments_data, demand_data, backlog_data):
             # if line_count == 0:
-            if line_count == 0 or line_count > 22 or line_count in [11, 20, 12, 15]:  # Only considering beerGame condition
+            if line_count == 0 or line_count > 22 or line_count in rows_to_ignore:  # Only considering beerGame condition
                 line_count += 1
                 pass
             else:
@@ -104,19 +106,10 @@ if __name__ == '__main__':
                 for elem1, elem2, elem3, elem4 in zip(row1[1:-2], row2[1:-2], row3[1:-2], row4[1:-2]):
                     data['obs'] = np.append(data['obs'], [[int(elem1), int(elem2), int(elem3), int(elem4)]], axis=0)
 
-
-    # np.savez('expert_data.npz', data['actions'], data['episode_returns'],
-    #          data['obs'], data['rewards'], data['episode_starts'])
     np.savez('expert_data.npz', **data)
-
-    # Create log dir
-    log_dir = './tmp/gail/3'
-    os.makedirs(log_dir, exist_ok=True)
 
     # Create and wrap the environment
     env = gym.make('Crisp-v0')
-    # Logs will be saved in log_dir/monitor.csv
-    # env = Monitor(env, log_dir, allow_early_resets=True)
 
     # Generate expert trajectories (train expert)
     # model = A2C('MlpPolicy', 'Crisp-v0', verbose=1)
@@ -128,16 +121,16 @@ if __name__ == '__main__':
     dataset = ExpertDataset(expert_path='expert_data.npz', verbose=1)
 
     model = GAIL("MlpPolicy", env, dataset, verbose=2,
-                 tensorboard_log='./tmp/gail/2',
+                 tensorboard_log='./tmp/gail/4',
                  full_tensorboard_log=True,
                  timesteps_per_batch=1000,
                  )
 
     # Note: in practice, you need to train for 1M steps to have a working policy
     # model.pretrain(dataset, n_epochs=2000, learning_rate=1e-5, adam_epsilon=1e-08, val_interval=None)
-    model.learn(total_timesteps=60000, callback=callback)
+    model.learn(total_timesteps=100000, callback=callback)
     params = model.get_parameters()
-    model.save("gail_crisp_33")
+    model.save("./models/gail_crisp_18")
 
     # del model # remove to demonstrate saving and loading
 

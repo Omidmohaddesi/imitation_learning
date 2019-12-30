@@ -63,16 +63,18 @@ shipment = series.shipment
 n_steps = 4
 
 series = pd.DataFrame(columns=['inventory', 'demand', 'backlog', 'shipment', 'order'])
-zero_matrix = pd.DataFrame(np.zeros((10, 5)), columns=['inventory', 'demand', 'backlog', 'shipment', 'order'])
+# zero_matrix = pd.DataFrame(np.zeros((10, 5)), columns=['inventory', 'demand', 'backlog', 'shipment', 'order'])
 
 expert_id = list(range(0, 68))
 # shuffle(expert_id)
 for i in expert_id:
-    series = series.append(zero_matrix)
+    # series = series.append(zero_matrix)
     series = series.append(pd.concat([inventory.iloc[i, 0:20], demand.iloc[i, 0:20],
                                       backlog.iloc[i, 0:20], shipment.iloc[i, 0:20], order.iloc[i, 0:20]],
                                       axis=1,
                                       keys=['inventory', 'demand', 'backlog', 'shipment', 'order']))
+
+series.to_csv('./datasets/all_player_data.csv')
 
 series = series.values.astype(int)
 
