@@ -3,76 +3,119 @@ import pandas as pd
 import numpy as np
 from scipy.optimize import least_squares
 import matplotlib.pyplot as plt
+import tkinter
+import matplotlib
+import gym
+from gym_crisp.envs import CrispEnv
+from sklearn.metrics import mean_absolute_error as mae
 
-
-expert_data_path = "datasets/player_state_actions/"
-
-dataset = CrispDataset(expert_data_path)
-order = dataset.order
-inventory = dataset.inventory
-demand = dataset.demand
-backlog = dataset.backlog
-shipment = dataset.shipment
-
+matplotlib.use('TkAgg')
 
 def fun(w, x, y):
-    return w[0] * x[:, 0] + w[1] * x[:, 1] + w[2] * x[:, 2] + w[3] * x[:, 3] - y
+    f = w[0] * x[:, 0] + w[1] * x[:, 1] + w[2] * x[:, 2] + w[3] * x[:, 3]
+    f[f < 0] = 0
+    f.astype(int)
+    return f - y
 
 
-def calculate_order(x, w1, w2, w3, w4):
-    return w1 * x[:, 0] + w2 * x[:, 1] + w3 * x[:, 2] + w4 * x[:, 3]
+def calculate_order(x, w1, w2, w3, w4, method='multiple'):
+    # for calculating multiple observation:
+    if method == 'multiple':
+        f = (w1 * x[:, 0] + w2 * x[:, 1] + w3 * x[:, 2] + w4 * x[:, 3]).astype(int)
+        f[f < 0] = 0
+        return f
+    # for calculating single observation:
+    elif method == 'single':
+        return max(0, int(w1 * x[0] + w2 * x[1] + w3 * x[2] + w4 * x[3]))
 
 
-np.linspace(0, 30)
-data = pd.DataFrame(columns=['order', 'inventory', 'demand', 'backlog', 'shipment'])
+if __name__ == '__main__':
 
-for i in range(0, 68):
-    data = data.append(
-        pd.concat([order.iloc[i, 0:20], inventory.iloc[i, 0:20], demand.iloc[i, 0:20],
-                   backlog.iloc[i, 0:20], shipment.iloc[i, 0:20]],
-                  axis=1,
-                  keys=['order', 'inventory', 'demand', 'backlog', 'shipment']), ignore_index=True)
+    expert_data_path = "datasets/player_state_actions/"
 
-w0 = np.ones(4)
-y_train = data.iloc[:, 0].to_numpy(dtype=int)
-x_train = data.iloc[:, 1:5].to_numpy(dtype=int)
+    dataset = CrispDataset(expert_data_path)
+    order = dataset.order
+    inventory = dataset.inventory
+    demand = dataset.demand
+    backlog = dataset.backlog
+    shipment = dataset.shipment
 
-res_lsq = least_squares(fun, w0, args=(x_train, y_train))
-res_robust = least_squares(fun, w0, loss='soft_l1', f_scale=0.1, args=(x_train, y_train))
+    data = pd.DataFrame(columns=['order', 'inventory', 'shipment', 'demand', 'backlog'])
 
-y_test = data.iloc[:, 0].to_numpy(dtype=int)
-x_test = data.iloc[:, 1:5].to_numpy(dtype=int)
+    players_to_ignore = [10, 19, 11, 14]
 
-y_lsq = calculate_order(x_test, *res_lsq.x)
-y_robust = calculate_order(x_test, *res_robust.x)
+    for i in range(0, 22):
+        if i not in players_to_ignore:
+            data = data.append(
+                pd.concat([order.iloc[i, 0:20], inventory.iloc[i, 0:20], shipment.iloc[i, 0:20],
+                          demand.iloc[i, 0:20], backlog.iloc[i, 0:20]],
+                          axis=1,
+                          keys=['order', 'inventory', 'shipment', 'demand', 'backlog']), ignore_index=True)
 
-y_train = pd.DataFrame(np.array_split(y_train, 68))
-y_lsq = pd.DataFrame(np.array_split(y_lsq, 68))
-y_robust = pd.DataFrame(np.array_split(y_robust, 68))
+    models = np.empty(shape=(0, 4), dtype=float)
 
-mean_lsq = y_lsq.mean()
-mean_robust = y_robust.mean()
-mean_y = y_train.mean()
+    for i in range(0, 18*20, 20):
 
-fig, ax = plt.subplots()
-boxplot = y_train.boxplot()
-boxplot.plot(np.array(range(1, 21)), mean_lsq, label='lsq')
-boxplot.plot(np.array(range(1, 21)), mean_robust, label='robust')
-plt.xlabel('$t$')
-plt.ylabel('$order$')
-plt.legend()
+        w0 = np.ones(4)
+        y_train = data.iloc[i:i+20, 0].to_numpy(dtype=int)
+        x_train = data.iloc[i:i+20, 1:5].to_numpy(dtype=int)
 
-fig2, ax2 = plt.subplots()
-ax2 = plt.plot(mean_robust, mean_y, 'o', label='robust')
-ax2 = plt.plot(mean_robust, mean_robust)
-plt.show()
+        # res_lsq = least_squares(fun, w0, args=(x_train, y_train))
+        res_robust = least_squares(fun, w0, loss='soft_l1', f_scale=0.1, args=(x_train, y_train))
 
-# plt.plot(np.array(range(1, 21)), y_train, 'o', label='data')
-# plt.plot(np.array(range(1, 21)), y_lsq, label='lsq')
-# plt.plot(np.array(range(1, 21)), y_robust, label='robust')
-# plt.xlabel('$t$')
-# plt.ylabel('$order$')
-# plt.legend()
-# plt.show()
-#
-# print("")
+        models = np.append(models, [res_robust.x], axis=0)
+        # y_test = data.iloc[i:i+20, 0].to_numpy(dtype=int)
+        # x_test = data.iloc[i:i+20, 1:5].to_numpy(dtype=int)
+
+        # y_lsq = calculate_order(x_test, *res_lsq.x)
+        # y_robust = calculate_order(x_test, *res_robust.x)
+
+    np.savez('regression_models.npz', *models)
+
+    # y_train = pd.DataFrame(np.array_split(y_train, 68))
+    # y_lsq = pd.DataFrame(np.array_split(y_lsq, 68))
+    # y_robust = pd.DataFrame(np.array_split(y_robust, 68))
+
+    # mean_lsq = y_lsq.mean()
+    # mean_robust = y_robust.mean()
+    # mean_y = y_train.mean()
+
+    # fig, ax = plt.subplots()
+    # boxplot = y_train.boxplot()
+    # boxplot.plot(np.array(range(1, 21)), mean_lsq, label='lsq')
+    # boxplot.plot(np.array(range(1, 21)), mean_robust, label='robust')
+    # plt.xlabel('$t$')
+    # plt.ylabel('$order$')
+    # plt.legend()
+
+    # fig2, ax2 = plt.subplots()
+    # ax2 = plt.plot(mean_robust, mean_y, 'o', label='robust')
+    # ax2 = plt.plot(mean_robust, mean_robust)
+    # plt.show()
+
+    # env = gym.make('Crisp-v0')
+    # env.seed(123)
+    # obs = env.reset()
+    # reward_sum = 0
+    # for _ in range(21):
+    #     action = calculate_order(obs, *res_robust.x, method='single')
+    #     obs, reward, done, info = env.step(action)
+    #     print(action)
+    #     reward_sum += reward
+    #     # if done:
+    #     #     obs = env.reset()
+    #     #     reward_sum = 0
+    # print(f'Total reward is ', reward_sum)
+
+    # print('lsq: ', mae(y_train, y_lsq))
+    # print('res_robust: ', mae(y_train, y_robust))
+
+    # plt.plot(np.array(range(1, 21)), y_train, label='data')
+    # plt.plot(np.array(range(1, 21)), y_lsq, label=f'lsq ({mae(y_train, y_lsq)})')
+    # plt.plot(np.array(range(1, 21)), y_robust, label=f'robust ({ mae(y_train, y_robust)})')
+    # plt.xlabel('$t$')
+    # plt.ylabel('$order$')
+    # plt.legend()
+    # plt.show()
+
+

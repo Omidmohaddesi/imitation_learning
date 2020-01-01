@@ -47,8 +47,8 @@ def series_to_supervised(data, n_in=1, n_out=1, dropnan=True):
     return agg
 
 
-expert_data_path = "C:/Users/mohaddesi.s/Documents/PycharmProjects/MyFirstProgram/crisp_game_server" \
-                   "/gamette_experiments/study_1/player_state_actions/"
+expert_data_path = "datasets/player_state_actions/"
+
 
 dataset = CrispDataset(expert_data_path)
 order = dataset.order

@@ -65,16 +65,17 @@ n_steps = 4
 series = pd.DataFrame(columns=['inventory', 'demand', 'backlog', 'shipment', 'order'])
 # zero_matrix = pd.DataFrame(np.zeros((10, 5)), columns=['inventory', 'demand', 'backlog', 'shipment', 'order'])
 
-expert_id = list(range(0, 68))
+expert_id = list(range(0, 22))
 # shuffle(expert_id)
 for i in expert_id:
-    # series = series.append(zero_matrix)
-    series = series.append(pd.concat([inventory.iloc[i, 0:20], demand.iloc[i, 0:20],
-                                      backlog.iloc[i, 0:20], shipment.iloc[i, 0:20], order.iloc[i, 0:20]],
-                                      axis=1,
-                                      keys=['inventory', 'demand', 'backlog', 'shipment', 'order']))
+    if i not in [10, 11, 14, 19]:
+        # series = series.append(zero_matrix)
+        series = series.append(pd.concat([inventory.iloc[i, 0:20], demand.iloc[i, 0:20],
+                                          backlog.iloc[i, 0:20], shipment.iloc[i, 0:20], order.iloc[i, 0:20]],
+                                         axis=1,
+                                         keys=['inventory', 'demand', 'backlog', 'shipment', 'order']))
 
-series.to_csv('./datasets/all_player_data.csv')
+# series.to_csv('./datasets/all_player_data.csv')
 
 series = series.values.astype(int)
 
@@ -82,7 +83,8 @@ series = series.values.astype(int)
 # scaler = MinMaxScaler(feature_range=(0, 1))
 # series = scaler.fit_transform(series)
 
-split_time = 50 * 30
+split_time = 12 * 20
+# split_time = 20
 x_train = series[:split_time, :-1]
 y_train = series[:split_time, -1]
 x_test = series[split_time:, :-1]
@@ -181,7 +183,7 @@ model.summary()
 # history = model.fit(x_train, y_train, epochs=100, verbose=1, shuffle=False,
 #                     validation_data=(x_test, y_test), callbacks=[lr_schedule])
 
-log_dir = "logdir3"   # + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+log_dir = "logdir4"   # + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
 tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
 
 history = model.fit(dataset, epochs=65, verbose=1, callbacks=[lr_schedule, tensorboard_callback])
@@ -197,20 +199,20 @@ history = model.fit(dataset, epochs=65, verbose=1, callbacks=[lr_schedule, tenso
 # plt.show()
 
 # Predicting using the model
-# forecast = []
-# results = []
-# for i in range(len(series) - n_steps):
-#     # forecast.append(model.predict(dataset[i, :-1].reshape((1, n_steps, n_features)))[0][0])
-#     forecast.append(model.predict(series[i:i+n_steps, :-1].reshape((1, n_steps, n_features)).astype(float))[0][0])
-#
-# forecast = forecast[split_time-n_steps:]
-# results = np.array(forecast)
-#
-# plt.plot(y_test)
-# plt.plot(results)
-# plt.show()
+forecast = []
+results = []
+for i in range(len(series) - n_steps):
+    # forecast.append(model.predict(dataset[i, :-1].reshape((1, n_steps, n_features)))[0][0])
+    forecast.append(model.predict(series[i:i+n_steps, :-1].reshape((1, n_steps, n_features)).astype(float))[0][0])
 
-# print(tf.keras.metrics.mean_absolute_error(y_test, results).numpy())
+forecast = forecast[split_time-n_steps:]
+results = np.array(forecast)
+
+plt.plot(y_test)
+plt.plot(results)
+plt.show()
+
+print(tf.keras.metrics.mean_absolute_error(y_test, results).numpy())
 
 
 # print(history.history)

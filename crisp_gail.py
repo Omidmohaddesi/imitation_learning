@@ -40,7 +40,15 @@ if __name__ == '__main__':
     #     print(item)
     #     print(data[item])
 
-    rows_to_ignore = [11, 20, 12, 15]   # clusters to remove
+    rows_to_ignore = [11, 20, 12, 15]   # players to remove
+                      # 9,
+                      # 19, 1, 22, 14, 16,
+                      # 8, 3, 13, 21, 6, 7,
+                      # 2, 10, 18, 17, 5, 4]
+
+                      # 2, 3, 4, 5, 6,  # before
+                      # 7, 8, 9, 10, 13, 14,
+                      # 16, 17, 18, 19, 21, 22]
 
     expert_data_path = "datasets/player_state_actions/"
 
@@ -121,16 +129,16 @@ if __name__ == '__main__':
     dataset = ExpertDataset(expert_path='expert_data.npz', verbose=1)
 
     model = GAIL("MlpPolicy", env, dataset, verbose=2,
-                 tensorboard_log='./tmp/gail/4',
+                 tensorboard_log='./tmp/gail/5',
                  full_tensorboard_log=True,
                  timesteps_per_batch=1000,
                  )
 
     # Note: in practice, you need to train for 1M steps to have a working policy
-    # model.pretrain(dataset, n_epochs=2000, learning_rate=1e-5, adam_epsilon=1e-08, val_interval=None)
-    model.learn(total_timesteps=100000, callback=callback)
+    model.pretrain(dataset, n_epochs=5000, learning_rate=1e-5, adam_epsilon=1e-08, val_interval=None)
+    # model.learn(total_timesteps=100000, callback=callback)
     params = model.get_parameters()
-    model.save("./models/gail_crisp_18")
+    model.save("./models/with_sorted_performance/BC_crisp_18")
 
     # del model # remove to demonstrate saving and loading
 
