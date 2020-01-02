@@ -34,7 +34,9 @@ class CrispEnv(gym.Env):
         #     low=self.min_order, high=self.max_order, shape=(1,), dtype=np.float32)
         self.action_space = spaces.Discrete(500)
         self.observation_space = spaces.Box(
-            low=np.array([0, 0, 0, 0]), high=np.array([self.max_order, self.max_order, self.max_order, self.max_order]),
+            low=np.array([0, 0, 0, 0, 0, 0, 0]),
+            high=np.array([self.max_order, self.max_order, self.max_order, self.max_order,
+                           self.max_order, self.max_order, self.max_order]),
             dtype=np.float32)
 
         self.seed()
@@ -114,6 +116,13 @@ class CrispEnv(gym.Env):
         history_item = self.agent.get_history_item(now)
         shipment = sum(d['item'].amount for d in history_item['delivery'])
         demand = self.agent.demand(now)
+        up_to_level = self.agent.up_to_level
+
+        on_order = sum(self.agent.on_order[j].amount for j in range(0, len(self.agent.on_order))
+                       if self.agent.on_order[j].dst.id == 1)
+
+        suggested = [up_to_level - inventory + backlog - on_order
+                     if up_to_level - inventory + backlog - on_order > 0 else 0][0]
 
         if backlog + demand >= inventory:
             allocation = inventory
@@ -133,7 +142,7 @@ class CrispEnv(gym.Env):
         self.backlog = backlog
         self.decisions.append(decision)
 
-        return np.array([inventory, shipment, demand, backlog])
+        return np.array([inventory, shipment, demand, backlog, up_to_level, on_order, suggested])
 
     def _get_agent_by_role(self, role):
         #   IMPORTANT:  This part probably needs to be edited. Right now this function only returns the first agent in

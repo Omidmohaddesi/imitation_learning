@@ -14,15 +14,17 @@ def scale_performance(y, min_n, max_n):
 
 if __name__ == '__main__':
 
-    data = np.load('expert_data_2.npz')
+    data = np.load('expert_data_3.npz')
 
     # num_traj = [1, 6, 12, 18]
-    num_traj = [1, 5, 10, 16]
+    # num_traj = [1, 5, 10, 16]
+    num_traj = [1, 7, 13, 20]
 
     df = pd.DataFrame(columns=['num_traj', 'performance', 'data_type'])
 
     # players = [8, 15, 0, 17, 11, 12, 7, 2, 10, 16, 5, 6, 1, 9, 14, 13, 4, 3]
-    players = [0, 13, 9, 11, 15, 1, 5, 4, 14, 3, 8, 7, 2, 6, 12, 10]
+    # players = [0, 13, 9, 11, 15, 1, 5, 4, 14, 3, 8, 7, 2, 6, 12, 10]
+    players = [9, 4, 3, 11, 10, 19, 8, 16, 12, 17, 15, 14, 13, 6, 18, 1, 7, 0, 5, 2]
 
     for i in num_traj:
         df = df.append({'num_traj': i,
@@ -49,11 +51,11 @@ if __name__ == '__main__':
                 reward_sum = 0
         print(f' Random model {i} done!')
 
-    regressions = np.load('regression_models_2.npz')
+    regressions = np.load('regression_models_3.npz')
 
     for i in num_traj:
         env = gym.make('Crisp-v0')
-        env.seed(123)
+        # env.seed(123)
         for j in players[0:i]:
             weights = regressions.get(f'arr_{j}')
             obs = env.reset()
@@ -66,8 +68,8 @@ if __name__ == '__main__':
                             'performance': reward_sum,
                             'data_type': 'Regression'}, ignore_index=True)
 
-    gail_models = {i: GAIL.load(f'./models/with_sorted_performance/2/gail_crisp_{i}') for i in num_traj}
-    bc_models = {i: GAIL.load(f'./models/with_sorted_performance/2/BC_crisp_{i}') for i in num_traj}
+    gail_models = {i: GAIL.load(f'./models/with_sorted_performance/3/gail_crisp_{i}') for i in num_traj}
+    bc_models = {i: GAIL.load(f'./models/with_sorted_performance/3/BC_crisp_{i}') for i in num_traj}
 
     for item in gail_models.items():
         model = item[1]
@@ -131,7 +133,7 @@ if __name__ == '__main__':
         t.set_text(l)
     ax.set(xticks=num_traj, ylabel='Performance', xlabel='Number of trajectories in dataset')
     sns.despine(offset=5, trim=True)
-    fig.savefig('expert_vs_gail_2.png', format='png', dpi=300)
+    fig.savefig('expert_vs_gail_3.png', format='png', dpi=300)
 
     '''
     titles = []

@@ -11,22 +11,26 @@ from sklearn.metrics import mean_absolute_error as mae
 
 matplotlib.use('TkAgg')
 
+
 def fun(w, x, y):
-    f = w[0] * x[:, 0] + w[1] * x[:, 1] + w[2] * x[:, 2] + w[3] * x[:, 3]
+    f = w[0] * x[:, 0] + w[1] * x[:, 1] + w[2] * x[:, 2] + w[3] * x[:, 3] \
+        + w[4] * x[:, 4] + w[5] * x[:, 5] + w[6] * x[:, 6]
     f[f < 0] = 0
     f.astype(int)
     return f - y
 
 
-def calculate_order(x, w1, w2, w3, w4, method='multiple'):
+def calculate_order(x, w1, w2, w3, w4, w5, w6, w7,  method='multiple'):
     # for calculating multiple observation:
     if method == 'multiple':
-        f = (w1 * x[:, 0] + w2 * x[:, 1] + w3 * x[:, 2] + w4 * x[:, 3]).astype(int)
+        f = (w1 * x[:, 0] + w2 * x[:, 1] + w3 * x[:, 2] + w4 * x[:, 3]
+             + w5 * x[:, 4] + w6 * x[:, 5] + w7 * x[:, 6]).astype(int)
         f[f < 0] = 0
         return f
     # for calculating single observation:
     elif method == 'single':
-        return max(0, int(w1 * x[0] + w2 * x[1] + w3 * x[2] + w4 * x[3]))
+        return max(0, int(w1 * x[0] + w2 * x[1] + w3 * x[2] + w4 * x[3]
+                          + w5 * x[4] + w6 * x[5] + w7 * x[6]))
 
 
 if __name__ == '__main__':
@@ -39,39 +43,46 @@ if __name__ == '__main__':
     demand = dataset.demand
     backlog = dataset.backlog
     shipment = dataset.shipment
+    upToLevel = dataset.up_to_level
+    onOrder = dataset.on_order
+    suggested = dataset.suggested
 
-    data = pd.DataFrame(columns=['order', 'inventory', 'shipment', 'demand', 'backlog'])
+    data = pd.DataFrame(columns=['order', 'inventory', 'shipment', 'demand', 'backlog',
+                                 'upToLevel', 'onOrder', 'suggested'])
 
     # players_to_ignore = [10, 19, 11, 14]
-    players_to_ignore = [2, 4, 1, 5, 10, 15]
+    # players_to_ignore = [2, 4, 1, 5, 10, 15]
+    players_to_ignore = [10, 12, 14, 20]
 
-    for i in range(46, 68):
-        if i not in [x + 46 for x in players_to_ignore]:
+    for i in range(22, 46):
+        if i not in [x + 22 for x in players_to_ignore]:
             data = data.append(
                 pd.concat([order.iloc[i, 0:20], inventory.iloc[i, 0:20], shipment.iloc[i, 0:20],
-                          demand.iloc[i, 0:20], backlog.iloc[i, 0:20]],
+                          demand.iloc[i, 0:20], backlog.iloc[i, 0:20], upToLevel.iloc[i-22, 0:20],
+                          onOrder.iloc[i-22, 0:20], suggested.iloc[i-22, 0:20]],
                           axis=1,
-                          keys=['order', 'inventory', 'shipment', 'demand', 'backlog']), ignore_index=True)
+                          keys=['order', 'inventory', 'shipment', 'demand', 'backlog',
+                                'upToLevel', 'onOrder', 'suggested']), ignore_index=True)
 
-    models = np.empty(shape=(0, 4), dtype=float)
+    models = np.empty(shape=(0, 7), dtype=float)
 
-    for i in range(0, 16*20, 20):
+    for i in range(0, 20*20, 20):
 
-        w0 = np.ones(4)
+        w0 = np.ones(7)
         y_train = data.iloc[i:i+20, 0].to_numpy(dtype=int)
-        x_train = data.iloc[i:i+20, 1:5].to_numpy(dtype=int)
+        x_train = data.iloc[i:i+20, 1:8].to_numpy(dtype=int)
 
-        # res_lsq = least_squares(fun, w0, args=(x_train, y_train))
-        res_robust = least_squares(fun, w0, loss='soft_l1', f_scale=0.1, args=(x_train, y_train))
+        res_lsq = least_squares(fun, w0, args=(x_train, y_train))
+        # res_robust = least_squares(fun, w0, loss='soft_l1', f_scale=0.1, args=(x_train, y_train))
 
-        models = np.append(models, [res_robust.x], axis=0)
+        models = np.append(models, [res_lsq.x], axis=0)
         # y_test = data.iloc[i:i+20, 0].to_numpy(dtype=int)
-        # x_test = data.iloc[i:i+20, 1:5].to_numpy(dtype=int)
+        # x_test = data.iloc[i:i+20, 1:8].to_numpy(dtype=int)
 
         # y_lsq = calculate_order(x_test, *res_lsq.x)
         # y_robust = calculate_order(x_test, *res_robust.x)
 
-    np.savez('regression_models_2.npz', *models)
+    np.savez('regression_models_3.npz', *models)
 
     # y_train = pd.DataFrame(np.array_split(y_train, 68))
     # y_lsq = pd.DataFrame(np.array_split(y_lsq, 68))
@@ -110,10 +121,12 @@ if __name__ == '__main__':
 
     # print('lsq: ', mae(y_train, y_lsq))
     # print('res_robust: ', mae(y_train, y_robust))
-
+    #
     # plt.plot(np.array(range(1, 21)), y_train, label='data')
     # plt.plot(np.array(range(1, 21)), y_lsq, label=f'lsq ({mae(y_train, y_lsq)})')
     # plt.plot(np.array(range(1, 21)), y_robust, label=f'robust ({ mae(y_train, y_robust)})')
+    # plt.grid()
+    # plt.xticks(np.array(range(1, 21)))
     # plt.xlabel('$t$')
     # plt.ylabel('$order$')
     # plt.legend()

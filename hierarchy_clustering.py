@@ -32,7 +32,7 @@ labelList3 = np.arange(0, 22)
 
 fig, axes = plt.subplots(3, 1, figsize=(3.5, 8))
 fig.tight_layout()
-plt.subplots_adjust(top=0.92,bottom=0.06, hspace=0.3)
+plt.subplots_adjust(top=0.92, bottom=0.06, hspace=0.3)
 
 dn1 = dendrogram(linked1,
                  ax=axes[0],
@@ -40,7 +40,7 @@ dn1 = dendrogram(linked1,
                  labels=labelList1,
                  distance_sort='descending',
                  show_leaf_counts=True,
-                 # color_threshold=THRESHOLD,
+                 color_threshold=400,
                  leaf_rotation=90,
                  )
 axes[0].set_title('Human-Like')
@@ -53,7 +53,7 @@ dn2 = dendrogram(linked2,
                  labels=labelList2,
                  distance_sort='descending',
                  show_leaf_counts=True,
-                 # color_threshold=THRESHOLD,
+                 color_threshold=250,
                  leaf_rotation=90,
                  )
 axes[1].set_title('OUL w/ suggestions')
@@ -65,7 +65,7 @@ dn3 = dendrogram(linked3,
                  labels=labelList3,
                  distance_sort='descending',
                  show_leaf_counts=True,
-                 # color_threshold=THRESHOLD,
+                 color_threshold=300,
                  leaf_rotation=90,
                  )
 axes[2].set_title('OUL w/o suggestions')
