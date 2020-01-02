@@ -14,13 +14,15 @@ def scale_performance(y, min_n, max_n):
 
 if __name__ == '__main__':
 
-    data = np.load('expert_data.npz')
+    data = np.load('expert_data_2.npz')
 
-    num_traj = [1, 6, 12, 18]
+    # num_traj = [1, 6, 12, 18]
+    num_traj = [1, 5, 10, 16]
 
     df = pd.DataFrame(columns=['num_traj', 'performance', 'data_type'])
 
-    players = [8, 15, 0, 17, 11, 12, 7, 2, 10, 16, 5, 6, 1, 9, 14, 13, 4, 3]
+    # players = [8, 15, 0, 17, 11, 12, 7, 2, 10, 16, 5, 6, 1, 9, 14, 13, 4, 3]
+    players = [0, 13, 9, 11, 15, 1, 5, 4, 14, 3, 8, 7, 2, 6, 12, 10]
 
     for i in num_traj:
         df = df.append({'num_traj': i,
@@ -47,7 +49,7 @@ if __name__ == '__main__':
                 reward_sum = 0
         print(f' Random model {i} done!')
 
-    regressions = np.load('regression_models.npz')
+    regressions = np.load('regression_models_2.npz')
 
     for i in num_traj:
         env = gym.make('Crisp-v0')
@@ -64,8 +66,8 @@ if __name__ == '__main__':
                             'performance': reward_sum,
                             'data_type': 'Regression'}, ignore_index=True)
 
-    gail_models = {i: GAIL.load(f'./models/with_sorted_performance/gail_crisp_{i}') for i in num_traj}
-    bc_models = {i: GAIL.load(f'./models/with_sorted_performance/BC_crisp_{i}') for i in num_traj}
+    gail_models = {i: GAIL.load(f'./models/with_sorted_performance/2/gail_crisp_{i}') for i in num_traj}
+    bc_models = {i: GAIL.load(f'./models/with_sorted_performance/2/BC_crisp_{i}') for i in num_traj}
 
     for item in gail_models.items():
         model = item[1]
@@ -129,7 +131,7 @@ if __name__ == '__main__':
         t.set_text(l)
     ax.set(xticks=num_traj, ylabel='Performance', xlabel='Number of trajectories in dataset')
     sns.despine(offset=5, trim=True)
-    fig.savefig('expert_vs_gail2.png', format='png', dpi=300)
+    fig.savefig('expert_vs_gail_2.png', format='png', dpi=300)
 
     '''
     titles = []

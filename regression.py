@@ -42,10 +42,11 @@ if __name__ == '__main__':
 
     data = pd.DataFrame(columns=['order', 'inventory', 'shipment', 'demand', 'backlog'])
 
-    players_to_ignore = [10, 19, 11, 14]
+    # players_to_ignore = [10, 19, 11, 14]
+    players_to_ignore = [2, 4, 1, 5, 10, 15]
 
-    for i in range(0, 22):
-        if i not in players_to_ignore:
+    for i in range(46, 68):
+        if i not in [x + 46 for x in players_to_ignore]:
             data = data.append(
                 pd.concat([order.iloc[i, 0:20], inventory.iloc[i, 0:20], shipment.iloc[i, 0:20],
                           demand.iloc[i, 0:20], backlog.iloc[i, 0:20]],
@@ -54,7 +55,7 @@ if __name__ == '__main__':
 
     models = np.empty(shape=(0, 4), dtype=float)
 
-    for i in range(0, 18*20, 20):
+    for i in range(0, 16*20, 20):
 
         w0 = np.ones(4)
         y_train = data.iloc[i:i+20, 0].to_numpy(dtype=int)
@@ -70,7 +71,7 @@ if __name__ == '__main__':
         # y_lsq = calculate_order(x_test, *res_lsq.x)
         # y_robust = calculate_order(x_test, *res_robust.x)
 
-    np.savez('regression_models.npz', *models)
+    np.savez('regression_models_2.npz', *models)
 
     # y_train = pd.DataFrame(np.array_split(y_train, 68))
     # y_lsq = pd.DataFrame(np.array_split(y_lsq, 68))

@@ -69,7 +69,8 @@ class CrispEnv(gym.Env):
         self.total_reward = 0
         self.simulation = None
         self.runner = None
-        self.simulation, self.runner = simulation_builder.build_simulation_beer_game()
+        # self.simulation, self.runner = simulation_builder.build_simulation_beer_game()
+        self.simulation, self.runner = simulation_builder.build_simulation_beer_game_oul()
         self.agent = self._get_agent_by_role(self.role)
 
         self.runner._update_patient(0)

@@ -40,7 +40,14 @@ if __name__ == '__main__':
     #     print(item)
     #     print(data[item])
 
-    rows_to_ignore = [11, 20, 12, 15]   # players to remove
+    rows_to_ignore = [2, 4, 1, 5, 10, 15]
+                      # 0,
+                      # 19, 14, 17, 21,
+                      # 3, 9, 8, 20, 7,
+                      # 13, 12, 6, 11, 18, 16]
+    ''' 
+        for condition 1 human like
+        # 11, 20, 12, 15]   # players to remove
                       # 9,
                       # 19, 1, 22, 14, 16,
                       # 8, 3, 13, 21, 6, 7,
@@ -49,7 +56,7 @@ if __name__ == '__main__':
                       # 2, 3, 4, 5, 6,  # before
                       # 7, 8, 9, 10, 13, 14,
                       # 16, 17, 18, 19, 21, 22]
-
+    '''
     expert_data_path = "datasets/player_state_actions/"
 
     data = {'actions': np.empty((0, 1), int),
@@ -77,7 +84,7 @@ if __name__ == '__main__':
         for row in order_data:
             elem_count = 1
             # if line_count == 0:
-            if line_count == 0 or line_count > 22 or line_count in rows_to_ignore:  # Only considering beerGame condition
+            if line_count == 0 or line_count < 47 or line_count in [x + 47 for x in rows_to_ignore]:  # Only considering beerGame condition
                 line_count += 1
                 pass
             else:
@@ -94,7 +101,7 @@ if __name__ == '__main__':
         line_count = 0
         for row in cost_data:
             # if line_count == 0:
-            if line_count == 0 or line_count > 22 or line_count in rows_to_ignore:  # Only considering beerGame condition
+            if line_count == 0 or line_count < 47 or line_count in [x + 47 for x in rows_to_ignore]:  # Only considering beerGame condition
                 line_count += 1
                 pass
             else:
@@ -106,7 +113,7 @@ if __name__ == '__main__':
         line_count = 0
         for row1, row2, row3, row4 in zip(inventory_data, shipments_data, demand_data, backlog_data):
             # if line_count == 0:
-            if line_count == 0 or line_count > 22 or line_count in rows_to_ignore:  # Only considering beerGame condition
+            if line_count == 0 or line_count < 47 or line_count in [x + 47 for x in rows_to_ignore]:  # Only considering beerGame condition
                 line_count += 1
                 pass
             else:
@@ -114,7 +121,7 @@ if __name__ == '__main__':
                 for elem1, elem2, elem3, elem4 in zip(row1[1:-2], row2[1:-2], row3[1:-2], row4[1:-2]):
                     data['obs'] = np.append(data['obs'], [[int(elem1), int(elem2), int(elem3), int(elem4)]], axis=0)
 
-    np.savez('expert_data.npz', **data)
+    np.savez('expert_data_2.npz', **data)
 
     # Create and wrap the environment
     env = gym.make('Crisp-v0')
@@ -126,10 +133,10 @@ if __name__ == '__main__':
     # tf.debugging.set_log_device_placement(True)
 
     # Load the expert dataset
-    dataset = ExpertDataset(expert_path='expert_data.npz', verbose=1)
+    dataset = ExpertDataset(expert_path='expert_data_2.npz', verbose=1)
 
     model = GAIL("MlpPolicy", env, dataset, verbose=2,
-                 tensorboard_log='./tmp/gail/5',
+                 tensorboard_log='./tmp/gail/5/2',
                  full_tensorboard_log=True,
                  timesteps_per_batch=1000,
                  )
@@ -138,7 +145,7 @@ if __name__ == '__main__':
     model.pretrain(dataset, n_epochs=5000, learning_rate=1e-5, adam_epsilon=1e-08, val_interval=None)
     # model.learn(total_timesteps=100000, callback=callback)
     params = model.get_parameters()
-    model.save("./models/with_sorted_performance/BC_crisp_18")
+    model.save("./models/with_sorted_performance/2/BC_crisp_16")
 
     # del model # remove to demonstrate saving and loading
 
