@@ -64,8 +64,8 @@ if __name__ == '__main__':
                             'performance': reward_sum,
                             'data_type': 'Regression'}, ignore_index=True)
 
-    gail_models = {i: GAIL.load(f'./models/with_sorted_performance/gail_crisp_{i}') for i in num_traj}
-    bc_models = {i: GAIL.load(f'./models/with_sorted_performance/BC_crisp_{i}') for i in num_traj}
+    gail_models = {i: GAIL.load(f'./models/with_sorted_performance/1/gail_crisp_{i}') for i in num_traj}
+    bc_models = {i: GAIL.load(f'./models/with_sorted_performance/1/BC_crisp_{i}') for i in num_traj}
 
     for item in gail_models.items():
         model = item[1]
@@ -108,6 +108,8 @@ if __name__ == '__main__':
                 reward_sum = 0
         print(f'Behavioral Cloning model {item[0]} done!')
 
+    df.to_csv('performance_1.csv')
+
     df2 = df.copy()
     for i in num_traj:
         min_n = df2[(df2['num_traj'] == i) & (df2['data_type'] == 'Random')]['performance'].values[0]
@@ -129,7 +131,7 @@ if __name__ == '__main__':
         t.set_text(l)
     ax.set(xticks=num_traj, ylabel='Performance', xlabel='Number of trajectories in dataset')
     sns.despine(offset=5, trim=True)
-    fig.savefig('expert_vs_gail2.png', format='png', dpi=300)
+    fig.savefig('expert_vs_gail_1.png', format='png', dpi=300)
 
     '''
     titles = []
