@@ -110,6 +110,8 @@ if __name__ == '__main__':
                 reward_sum = 0
         print(f'Behavioral Cloning model {item[0]} done!')
 
+    df.to_csv('performance_2.csv')
+
     df2 = df.copy()
     for i in num_traj:
         min_n = df2[(df2['num_traj'] == i) & (df2['data_type'] == 'Random')]['performance'].values[0]
