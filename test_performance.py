@@ -18,14 +18,15 @@ if __name__ == '__main__':
 
     num_traj = [1, 6, 12, 18]
 
-    df = pd.DataFrame(columns=['num_traj', 'performance', 'data_type'])
+    df = pd.DataFrame(columns=['num_traj', 'performance', 'data_type', 'sd'])
 
     players = [8, 15, 0, 17, 11, 12, 7, 2, 10, 16, 5, 6, 1, 9, 14, 13, 4, 3]
 
     for i in num_traj:
         df = df.append({'num_traj': i,
                         'performance': data['episode_returns'][players[0:i]].mean(),
-                        'data_type': 'Expert'}, ignore_index=True)
+                        'data_type': 'Expert',
+                        'sd': data['episode_returns'][players[0:i]].std()}, ignore_index=True)
         # df = df.append({'num_traj': i,
         #                 'performance': data['episode_returns'][0:i].mean(),
         #                 'data_type': 'Expert'}, ignore_index=True)

@@ -32,7 +32,7 @@ labelList3 = np.arange(0, 22)
 
 fig, axes = plt.subplots(3, 1, figsize=(3.5, 8))
 fig.tight_layout()
-plt.subplots_adjust(top=0.92,bottom=0.06, hspace=0.3)
+plt.subplots_adjust(top=0.92, bottom=0.06, hspace=0.3)
 
 dn1 = dendrogram(linked1,
                  ax=axes[0],
@@ -40,39 +40,39 @@ dn1 = dendrogram(linked1,
                  labels=labelList1,
                  distance_sort='descending',
                  show_leaf_counts=True,
-                 # color_threshold=THRESHOLD,
+                 color_threshold=400,
                  leaf_rotation=90,
                  )
 axes[0].set_title('Human-Like')
 axes[0].tick_params(labelsize=8)
 
 # fig2 = plt.figure(figsize=(6, 10))
-dn2 = dendrogram(linked2,
-                 ax=axes[1],
-                 orientation='top',
-                 labels=labelList2,
-                 distance_sort='descending',
-                 show_leaf_counts=True,
-                 # color_threshold=THRESHOLD,
-                 leaf_rotation=90,
-                 )
-axes[1].set_title('OUL w/ suggestions')
-axes[1].tick_params(labelsize=8)
-
 dn3 = dendrogram(linked3,
-                 ax=axes[2],
+                 ax=axes[1],
                  orientation='top',
                  labels=labelList3,
                  distance_sort='descending',
                  show_leaf_counts=True,
-                 # color_threshold=THRESHOLD,
+                 color_threshold=300,
                  leaf_rotation=90,
                  )
-axes[2].set_title('OUL w/o suggestions')
+axes[1].set_title('OUL w/o suggestions')
+axes[1].tick_params(labelsize=8)
+
+dn2 = dendrogram(linked2,
+                 ax=axes[2],
+                 orientation='top',
+                 labels=labelList2,
+                 distance_sort='descending',
+                 show_leaf_counts=True,
+                 color_threshold=250,
+                 leaf_rotation=90,
+                 )
+axes[2].set_title('OUL w/ suggestions')
 axes[2].tick_params(labelsize=8)
 axes[2].set_xlabel('Player ID')
 
-fig.suptitle('Hierarchical Clustering with DTW')
+# fig.suptitle('Hierarchical Clustering with DTW')
 
 # fig2 = plt.figure(figsize=(10, 7))
 # dendrogram(linked2,
@@ -84,5 +84,5 @@ fig.suptitle('Hierarchical Clustering with DTW')
 #            )
 # plt.title('ward')
 
-fig.savefig('player_clusters_v.png', format='png', dpi=300)
+fig.savefig('player_clusters_v.png', format='png', dpi=600)
 # plt.show()
