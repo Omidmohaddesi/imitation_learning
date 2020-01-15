@@ -13,7 +13,7 @@ if __name__ == '__main__':
 
     data_scaled = data.copy()
 
-    for df, num_traj in zip(data_scaled.values(), num_traj_dict.values()) :
+    for df, num_traj in zip(data_scaled.values(), num_traj_dict.values()):
         tmp_df = df.copy()
         for i in num_traj:
             min_n = tmp_df[(tmp_df['num_traj'] == i) & (tmp_df['data_type'] == 'Random')]['performance'].values[0]
