@@ -8,8 +8,12 @@ import matplotlib
 import gym
 from gym_crisp.envs import CrispEnv
 from sklearn.metrics import mean_absolute_error as mae
+from sklearn.metrics import mean_squared_error as mse
+from sklearn.metrics import r2_score
+
 
 matplotlib.use('TkAgg')
+
 
 def fun(w, x, y):
     f = w[0] * x[:, 0] + w[1] * x[:, 1] + w[2] * x[:, 2] + w[3] * x[:, 3]
@@ -54,6 +58,15 @@ if __name__ == '__main__':
 
     models = np.empty(shape=(0, 4), dtype=float)
 
+    n = int(data.shape[0] / 20)
+    print('n: ', n)
+
+    error = []
+    # error2 = []
+    rmse = []
+    r2 = []
+    adjusted_r2 = []
+
     for i in range(0, 18*20, 20):
 
         w0 = np.ones(4)
@@ -64,13 +77,34 @@ if __name__ == '__main__':
         res_robust = least_squares(fun, w0, loss='soft_l1', f_scale=0.1, args=(x_train, y_train))
 
         models = np.append(models, [res_robust.x], axis=0)
-        # y_test = data.iloc[i:i+20, 0].to_numpy(dtype=int)
-        # x_test = data.iloc[i:i+20, 1:5].to_numpy(dtype=int)
+        y_test = data.iloc[i:i+20, 0].to_numpy(dtype=int)
+        x_test = data.iloc[i:i+20, 1:5].to_numpy(dtype=int)
 
         # y_lsq = calculate_order(x_test, *res_lsq.x)
-        # y_robust = calculate_order(x_test, *res_robust.x)
+        y_robust = calculate_order(x_test, *res_robust.x)
 
-    np.savez('regression_models.npz', *models)
+        error.append(mae(y_train, y_robust))
+        # error2.append(mae(y_train, y_lsq))
+        rmse.append(round(np.sqrt(mse(y_train, y_robust)), 2))
+        r = r2_score(y_train, y_robust)
+        adj_r = 1 - (1 - r) * (n - 1) / (n - 4 - 1)
+        r2.append(round(r, 2))
+        adjusted_r2.append(round(adj_r, 2))
+
+    print('robust: ', error)
+    # print('lsq:    ', error2)
+    print('RMSE:    ', rmse)
+    print('R^2:    ', r2)
+    print('Adjusted R^2:    ', adjusted_r2)
+
+    print('mean RMSE: ', round(np.mean(rmse), 2))
+    print('mean R^2: ', round(np.mean(r2), 2))
+    print('median R^2: ', np.median(r2))
+    print('mean Adjusted R^2: ', round(np.mean(adjusted_r2), 2))
+    print('median Adjusted R^2: ', np.median(adjusted_r2))
+
+
+    # np.savez('regression_models.npz', *models)
 
     # y_train = pd.DataFrame(np.array_split(y_train, 68))
     # y_lsq = pd.DataFrame(np.array_split(y_lsq, 68))
