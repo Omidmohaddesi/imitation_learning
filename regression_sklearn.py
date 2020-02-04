@@ -10,6 +10,7 @@ from gym_crisp.envs import CrispEnv
 from sklearn.metrics import mean_absolute_error as mae
 from sklearn.metrics import mean_squared_error as mse
 from sklearn.metrics import r2_score
+from sklearn.linear_model import LinearRegression
 
 
 matplotlib.use('TkAgg')
@@ -74,25 +75,27 @@ if __name__ == '__main__':
         x_train = data.iloc[i:i+20, 1:5].to_numpy(dtype=int)
 
         # res_lsq = least_squares(fun, w0, args=(x_train, y_train))
-        res_robust = least_squares(fun, w0, loss='soft_l1', f_scale=0.1, args=(x_train, y_train))
+        # res_robust = least_squares(fun, w0, loss='soft_l1', f_scale=0.1, args=(x_train, y_train))
+        reg = LinearRegression().fit(x_train, y_train)
 
-        models = np.append(models, [res_robust.x], axis=0)
+        # models = np.append(models, [res_robust.x], axis=0)
         y_test = data.iloc[i:i+20, 0].to_numpy(dtype=int)
         x_test = data.iloc[i:i+20, 1:5].to_numpy(dtype=int)
 
         # y_lsq = calculate_order(x_test, *res_lsq.x)
-        y_robust = calculate_order(x_test, *res_robust.x)
+        # y_robust = calculate_order(x_test, *res_robust.x)
+        y_predicted = reg.predict(x_train)
 
-        error.append(mae(y_train, y_robust))
-        # error2.append(mae(y_train, y_lsq))
-        rmse.append(round(np.sqrt(mse(y_train, y_robust)), 2))
-        r = r2_score(y_train, y_robust)
+        error.append(round(mae(y_train, y_predicted), 2))
+        # error2.append(round(mae(y_train, y_lsq), 2))
+        rmse.append(round(np.sqrt(mse(y_train, y_predicted)), 2))
+        r = r2_score(y_train, y_predicted)
         adj_r = 1 - (1 - r) * (n - 1) / (n - 4 - 1)
         r2.append(round(r, 2))
         adjusted_r2.append(round(adj_r, 2))
 
-    print('robust: ', error)
-    # print('lsq:    ', error2)
+    print('sklearn MAE: ', error)
+    # print('lsq MAE:    ', error2)
     print('RMSE:    ', rmse)
     print('R^2:    ', r2)
     print('Adjusted R^2:    ', adjusted_r2)
@@ -146,6 +149,7 @@ if __name__ == '__main__':
     # plt.plot(np.array(range(1, 21)), y_train, label='data')
     # plt.plot(np.array(range(1, 21)), y_lsq, label=f'lsq ({mae(y_train, y_lsq)})')
     # plt.plot(np.array(range(1, 21)), y_robust, label=f'robust ({ mae(y_train, y_robust)})')
+    # plt.plot(np.array(range(1, 21)), reg.predict(x_train), label=f'sklearn ({ mae(y_train, reg.predict(x_train))})')
     # plt.xlabel('$t$')
     # plt.ylabel('$order$')
     # plt.legend()
