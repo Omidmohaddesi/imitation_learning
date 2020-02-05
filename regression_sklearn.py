@@ -74,9 +74,9 @@ if __name__ == '__main__':
 
     for i in range(0, 18*20, 20):
 
-        w0 = np.ones(3)
+        w0 = np.ones(4)
         y_train = data.iloc[i:i+20, 0].to_numpy(dtype=int)
-        x_train = data.iloc[i:i+20, 1:4].to_numpy(dtype=int)
+        x_train = data.iloc[i:i+20, 1:5].to_numpy(dtype=int)
 
         # res_lsq = least_squares(fun, w0, args=(x_train, y_train))
         # res_robust = least_squares(fun, w0, loss='soft_l1', f_scale=0.1, args=(x_train, y_train))
@@ -84,7 +84,7 @@ if __name__ == '__main__':
 
         # models = np.append(models, [res_robust.x], axis=0)
         y_test = data.iloc[i:i+20, 0].to_numpy(dtype=int)
-        x_test = data.iloc[i:i+20, 1:4].to_numpy(dtype=int)
+        x_test = data.iloc[i:i+20, 1:5].to_numpy(dtype=int)
 
         # y_lsq = calculate_order(x_test, *res_lsq.x)
         # y_robust = calculate_order(x_test, *res_robust.x)
