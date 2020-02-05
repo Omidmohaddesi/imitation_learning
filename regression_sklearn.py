@@ -7,6 +7,7 @@ import tkinter
 import matplotlib
 import gym
 from gym_crisp.envs import CrispEnv
+import seaborn as sns
 from sklearn.metrics import mean_absolute_error as mae
 from sklearn.metrics import mean_squared_error as mse
 from sklearn.metrics import r2_score
@@ -68,11 +69,14 @@ if __name__ == '__main__':
     r2 = []
     adjusted_r2 = []
 
+    pred = pd.DataFrame(columns=['week', 'type', 'value'])
+    weights = pd.DataFrame(columns=['inventory', 'shipment', 'demand', 'backlog'])
+
     for i in range(0, 18*20, 20):
 
-        w0 = np.ones(4)
+        w0 = np.ones(3)
         y_train = data.iloc[i:i+20, 0].to_numpy(dtype=int)
-        x_train = data.iloc[i:i+20, 1:5].to_numpy(dtype=int)
+        x_train = data.iloc[i:i+20, 1:4].to_numpy(dtype=int)
 
         # res_lsq = least_squares(fun, w0, args=(x_train, y_train))
         # res_robust = least_squares(fun, w0, loss='soft_l1', f_scale=0.1, args=(x_train, y_train))
@@ -80,12 +84,25 @@ if __name__ == '__main__':
 
         # models = np.append(models, [res_robust.x], axis=0)
         y_test = data.iloc[i:i+20, 0].to_numpy(dtype=int)
-        x_test = data.iloc[i:i+20, 1:5].to_numpy(dtype=int)
+        x_test = data.iloc[i:i+20, 1:4].to_numpy(dtype=int)
 
         # y_lsq = calculate_order(x_test, *res_lsq.x)
         # y_robust = calculate_order(x_test, *res_robust.x)
         y_predicted = reg.predict(x_train)
 
+        pred = pred.append(pd.concat([pd.Series([i for i in range(1, 21)]),
+                                      pd.Series(['train' for i in range(20)]),
+                                      pd.Series(y_train)],
+                                     axis=1,
+                                     keys=['week', 'type', 'value']), ignore_index=True)
+        pred = pred.append(pd.concat([pd.Series([i for i in range(1, 21)]),
+                                      pd.Series(['predict' for i in range(20)]),
+                                      pd.Series(y_predicted)],
+                                     axis=1,
+                                     keys=['week', 'type', 'value']), ignore_index=True)
+        # weights = weights.append([pd.Series(reg.coef_)],
+        #                          axis=1,
+        #                          keys=['week', 'type', 'value']), ignore_index = True)
         error.append(round(mae(y_train, y_predicted), 2))
         # error2.append(round(mae(y_train, y_lsq), 2))
         rmse.append(round(np.sqrt(mse(y_train, y_predicted)), 2))
@@ -107,6 +124,16 @@ if __name__ == '__main__':
     print('median Adjusted R^2: ', np.median(adjusted_r2))
 
     # np.savez('regression_models.npz', *models)
+
+    pred['value'] = pred['value'].astype(float)
+    print(pred.dtypes)
+
+    fig1, ax1 = plt.subplots()
+    # axes = [ax, ax.twinx()]
+    ax1 = sns.scatterplot(x='week', y='value', data=pred[pred['type'] == 'train'])
+    ax1 = sns.lineplot(x='week', y='value', data=pred[pred['type'] == 'predict'],
+                      palette=sns.color_palette("RdBu", n_colors=7))
+    ax1.set(xticks=np.array(range(1, 21)))
 
     # y_train = pd.DataFrame(np.array_split(y_train, 68))
     # y_lsq = pd.DataFrame(np.array_split(y_lsq, 68))
