@@ -7,6 +7,7 @@ import tkinter
 import matplotlib
 import gym
 from gym_crisp.envs import CrispEnv
+import seaborn as sns
 from sklearn.metrics import mean_absolute_error as mae
 from sklearn.metrics import mean_squared_error as mse
 from sklearn.metrics import r2_score
@@ -81,6 +82,9 @@ if __name__ == '__main__':
 
     # del data['shipment']
 
+    pred = pd.DataFrame(columns=['week', 'type', 'value', 'subject'])
+    weights = pd.DataFrame(columns=['inventory', 'shipment', 'demand', 'backlog'])
+
     for i in range(0, 20*20, 20):
 
         w0 = np.ones(7)
@@ -98,6 +102,19 @@ if __name__ == '__main__':
         # y_lsq = calculate_order(x_test, *res_lsq.x)
         # y_robust = calculate_order(x_test, *res_robust.x)
         y_predicted = reg.predict(x_train)
+
+        pred = pred.append(pd.concat([pd.Series([j for j in range(1, 21)]),
+                                      pd.Series(['data' for j in range(20)]),
+                                      pd.Series(y_train),
+                                      pd.Series([str(i) for j in range(20)])],
+                                     axis=1,
+                                     keys=['week', 'type', 'value', 'subject']), ignore_index=True)
+        pred = pred.append(pd.concat([pd.Series([j for j in range(1, 21)]),
+                                      pd.Series(['prediction' for j in range(20)]),
+                                      pd.Series(y_predicted),
+                                      pd.Series([str(i) for j in range(20)])],
+                                     axis=1,
+                                     keys=['week', 'type', 'value', 'subject']), ignore_index=True)
 
         error.append(round(mae(y_train, y_predicted), 2))
         # error2.append(round(mae(y_train, y_lsq), 2))
@@ -120,6 +137,16 @@ if __name__ == '__main__':
     print('median Adjusted R^2: ', np.median(adjusted_r2))
 
     # np.savez('regression_models.npz', *models)
+
+    pred['value'] = pred['value'].astype(float)
+
+    fig1, ax1 = plt.subplots()
+    ax1 = sns.scatterplot(x='week', y='value', data=pred[pred['type'] == 'data'])
+    ax1 = sns.lineplot(x='week', y='value', data=pred[pred['type'] == 'prediction'],
+                      palette=sns.color_palette("RdBu", n_colors=7))
+    # ax1 = sns.lineplot(x='week', y='value', data=pred, hue='type')
+    ax1.set(xticks=np.array(range(1, 21)))
+    plt.show()
 
     # y_train = pd.DataFrame(np.array_split(y_train, 68))
     # y_lsq = pd.DataFrame(np.array_split(y_lsq, 68))
