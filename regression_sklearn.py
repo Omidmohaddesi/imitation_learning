@@ -134,6 +134,7 @@ if __name__ == '__main__':
     ax1 = sns.lineplot(x='week', y='value', data=pred[pred['type'] == 'predict'],
                       palette=sns.color_palette("RdBu", n_colors=7))
     ax1.set(xticks=np.array(range(1, 21)))
+    plt.show()
 
     # y_train = pd.DataFrame(np.array_split(y_train, 68))
     # y_lsq = pd.DataFrame(np.array_split(y_lsq, 68))
