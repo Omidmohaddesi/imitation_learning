@@ -91,12 +91,12 @@ if __name__ == '__main__':
         y_predicted = reg.predict(x_train)
 
         pred = pred.append(pd.concat([pd.Series([i for i in range(1, 21)]),
-                                      pd.Series(['train' for i in range(20)]),
+                                      pd.Series(['data' for i in range(20)]),
                                       pd.Series(y_train)],
                                      axis=1,
                                      keys=['week', 'type', 'value']), ignore_index=True)
         pred = pred.append(pd.concat([pd.Series([i for i in range(1, 21)]),
-                                      pd.Series(['predict' for i in range(20)]),
+                                      pd.Series(['prediction' for i in range(20)]),
                                       pd.Series(y_predicted)],
                                      axis=1,
                                      keys=['week', 'type', 'value']), ignore_index=True)
@@ -130,9 +130,10 @@ if __name__ == '__main__':
 
     fig1, ax1 = plt.subplots()
     # axes = [ax, ax.twinx()]
-    ax1 = sns.scatterplot(x='week', y='value', data=pred[pred['type'] == 'train'])
-    ax1 = sns.lineplot(x='week', y='value', data=pred[pred['type'] == 'predict'],
-                      palette=sns.color_palette("RdBu", n_colors=7))
+    # ax1 = sns.scatterplot(x='week', y='value', data=pred[pred['type'] == 'data'])
+    # ax1 = sns.lineplot(x='week', y='value', data=pred[pred['type'] == 'prediction'],
+    #                   palette=sns.color_palette("RdBu", n_colors=7))
+    ax1 = sns.lineplot(x='week', y='value', data=pred, hue='type')
     ax1.set(xticks=np.array(range(1, 21)))
     plt.show()
 

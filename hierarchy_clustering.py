@@ -3,7 +3,7 @@ from copy import deepcopy
 from scipy.cluster.hierarchy import dendrogram, linkage, fcluster
 from matplotlib import pyplot as plt
 import numpy as np
-from dtaidistance import dtw
+from dtaidistance import dtw, dtw_visualisation as dtwvis
 import seaborn as sns
 
 expert_data_path = "datasets/player_state_actions/"
@@ -18,6 +18,12 @@ trajectories = deepcopy(order)
 trajectories1 = trajectories.values[0:22, :]
 trajectories2 = trajectories.values[22:46, :]
 trajectories3 = trajectories.values[46:68, :]
+
+# s1 = trajectories1[2, :]
+# s2 = trajectories1[4, :]
+
+# path = dtw.warping_path(s1, s2)
+# dtwvis.plot_warping(s1, s2, path, filename="warp.png")
 
 linked1 = linkage(trajectories1, metric=dtw.distance, method='average', optimal_ordering=True)
 linked2 = linkage(trajectories2, metric=dtw.distance, method='average', optimal_ordering=True)
