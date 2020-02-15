@@ -36,9 +36,11 @@ labelList1 = np.arange(0, 22)
 labelList2 = np.arange(0, 24)
 labelList3 = np.arange(0, 22)
 
-fig, axes = plt.subplots(3, 1, figsize=(3.5, 8))
+# fig, axes = plt.subplots(1, 3, figsize=(3.5, 8))
+fig, axes = plt.subplots(1, 3, figsize=(15, 5))
 fig.tight_layout()
-plt.subplots_adjust(top=0.92, bottom=0.06, hspace=0.3)
+# plt.subplots_adjust(top=0.92, bottom=0.06, hspace=0.3)
+plt.subplots_adjust(top=0.9, bottom=0.15, hspace=0.3, left=0.05, right=0.98)
 
 dn1 = dendrogram(linked1,
                  ax=axes[0],
@@ -49,8 +51,8 @@ dn1 = dendrogram(linked1,
                  color_threshold=400,
                  leaf_rotation=90,
                  )
-axes[0].set_title('Human-Like')
-axes[0].tick_params(labelsize=8)
+axes[0].set_title('Human-Like', fontsize=16)
+axes[0].tick_params(labelsize=14)
 
 # fig2 = plt.figure(figsize=(6, 10))
 dn3 = dendrogram(linked3,
@@ -62,8 +64,8 @@ dn3 = dendrogram(linked3,
                  color_threshold=300,
                  leaf_rotation=90,
                  )
-axes[1].set_title('OUL w/o suggestions')
-axes[1].tick_params(labelsize=8)
+axes[1].set_title('OUL without Suggestions', fontsize=16)
+axes[1].tick_params(labelsize=14)
 
 dn2 = dendrogram(linked2,
                  ax=axes[2],
@@ -74,9 +76,9 @@ dn2 = dendrogram(linked2,
                  color_threshold=250,
                  leaf_rotation=90,
                  )
-axes[2].set_title('OUL w/ suggestions')
-axes[2].tick_params(labelsize=8)
-axes[2].set_xlabel('Player ID')
+axes[2].set_title('OUL with Suggestions', fontsize=16)
+axes[2].tick_params(labelsize=14)
+axes[1].set_xlabel('Player ID', fontsize=16)
 
 # fig.suptitle('Hierarchical Clustering with DTW')
 
@@ -90,5 +92,5 @@ axes[2].set_xlabel('Player ID')
 #            )
 # plt.title('ward')
 
-fig.savefig('player_clusters_v.png', format='png', dpi=600)
+fig.savefig('player_clusters_h2.png', format='png', dpi=300)
 # plt.show()

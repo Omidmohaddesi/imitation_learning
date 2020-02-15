@@ -21,21 +21,25 @@ if __name__ == '__main__':
             df.performance[df['num_traj'] == i] = df.performance[df['num_traj'] == i].apply(
                 lambda x: (x - min_n) / (max_n - min_n))
 
-    titles = ['Human-Like', 'OUL w/o Suggestion', 'OUL w/ Suggestion']
+    # titles = ['Human-Like', 'OUL w/o Suggestion', 'OUL w/ Suggestion']
+    titles = ['Human-Like', 'OUL without Suggestion', 'OUL with Suggestion']
     with sns.axes_style("darkgrid"):
 
-        fig, axes = plt.subplots(1, 3, figsize=(12, 4))
+        # fig, axes = plt.subplots(1, 3, figsize=(12, 4))
+        fig, axes = plt.subplots(1, 3, figsize=(14, 5))
         fig.tight_layout()
-        plt.subplots_adjust(top=0.92, bottom=0.25, hspace=0.3, left=.07, wspace=0.2)
+        # plt.subplots_adjust(top=0.92, bottom=0.25, hspace=0.3, left=.07, wspace=0.2)
+        plt.subplots_adjust(top=0.92, bottom=0.28, hspace=0.3, left=.08, wspace=0.2)
 
         new_labels = ['', 'Expert', 'Random', 'Regression', 'GAIL', 'Behavioral Cloning']
         i = 0
         for dfs, num_traj, title in zip(data_scaled.values(), num_traj_dict.values(), titles):
-            sns.set_context("paper", font_scale=1.25, rc={"lines.linewidth": 1, "lines.markeredgewidth": 1})
+            sns.set_context("paper", font_scale=1.75, rc={"lines.linewidth": 1.5, "lines.markeredgewidth": 1})
             sns.lineplot(x='num_traj', y='performance', hue='data_type', data=dfs, style='data_type',
                          style_order=['GAIL', 'Expert', 'Random', 'Behavioral Cloning', 'Regression'], ax=axes[i])
             axes[i].get_legend().set_title('')
-            axes[i].title.set_text(title)
+            # axes[i].title.set_text(title)
+            axes[i].set_title(title, fontsize=16)
             axes[i].set(xticks=num_traj, ylabel='', xlabel='')
             axes[i].get_legend().remove()
             handles, labels = axes[i].get_legend_handles_labels()
@@ -43,10 +47,11 @@ if __name__ == '__main__':
                        bbox_to_anchor=(0.52, 0.11),
                        fancybox=True, shadow=True, ncol=5)
             i += 1
-            fig.text(0.52, 0.13, 'Number of trajectories in dataset', va='center', ha='center',
-                     fontsize=10, fontname='sans-serif')
+            fig.text(0.52, 0.16, 'Number of trajectories in dataset', va='center', ha='center',
+                     fontsize=16, fontname='sans-serif')
             fig.text(0.02, 0.6, 'Performance (scaled)', va='center', ha='center', rotation='vertical',
-                     fontsize=10, fontname='sans-serif')
+                     fontsize=16, fontname='sans-serif')
         sns.despine(offset=5, trim=True)
-    fig.savefig('performance_all_2.png', format='png', dpi=600)
+    # fig.savefig('performance_all_2.png', format='png', dpi=600)
+    fig.savefig('performance_all_3.png', format='png', dpi=600)
     # plt.show()
