@@ -63,7 +63,6 @@ class Agent(object):
 
         return time in self.history
 
-
     def get_history_item(self, time):
         """get_current_history_item returns the history item that records
         what is happening now. If such item is already in the agents history,
@@ -266,7 +265,7 @@ class Agent(object):
             :param now: current time
             :type now: int
         """
-        self.history = {k:v for k,v in self.history.iteritems()
+        self.history = {k:v for k,v in self.history.items()
                            if k > now - self.history_length}
 
     def record_inventory_history(self, now):
