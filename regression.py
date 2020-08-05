@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import tkinter
 import matplotlib
 import gym
-from gym_crisp.envs import CrispEnv
+# from gym_crisp.envs import CrispEnv
 from sklearn.metrics import mean_absolute_error as mae
 from sklearn.metrics import mean_squared_error as mse
 from sklearn.metrics import r2_score
@@ -57,6 +57,8 @@ if __name__ == '__main__':
                           keys=['order', 'inventory', 'shipment', 'demand', 'backlog']), ignore_index=True)
 
     models = np.empty(shape=(0, 4), dtype=float)
+
+    data.to_csv('datasets/player_data_1.csv')
 
     n = int(data.shape[0] / 20)
     print('n: ', n)
