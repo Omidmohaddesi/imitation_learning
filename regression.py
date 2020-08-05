@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import tkinter
 import matplotlib
 import gym
-from gym_crisp.envs import CrispEnv
+# from gym_crisp.envs import CrispEnv
 from sklearn.metrics import mean_absolute_error as mae
 
 matplotlib.use('TkAgg')
@@ -65,6 +65,8 @@ if __name__ == '__main__':
                                 'upToLevel', 'onOrder', 'suggested']), ignore_index=True)
 
     models = np.empty(shape=(0, 7), dtype=float)
+
+    data.to_csv('datasets/player_data_3.csv')
 
     for i in range(0, 20*20, 20):
 
