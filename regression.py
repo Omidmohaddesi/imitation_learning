@@ -43,7 +43,7 @@ if __name__ == '__main__':
     backlog = dataset.backlog
     shipment = dataset.shipment
 
-    data = pd.DataFrame(columns=['order', 'inventory', 'shipment', 'demand', 'backlog'])
+    data = pd.DataFrame(columns=['order', 'inventory', 'shipment', 'demand', 'backlog', 'player_id'])
 
     # players_to_ignore = [10, 19, 11, 14]
     players_to_ignore = [2, 4, 1, 5, 10, 15]
@@ -51,10 +51,12 @@ if __name__ == '__main__':
     for i in range(46, 68):
         if i not in [x + 46 for x in players_to_ignore]:
             data = data.append(
-                pd.concat([order.iloc[i, 0:20], inventory.iloc[i, 0:20], shipment.iloc[i, 0:20],
-                          demand.iloc[i, 0:20], backlog.iloc[i, 0:20]],
-                          axis=1,
-                          keys=['order', 'inventory', 'shipment', 'demand', 'backlog']), ignore_index=True)
+                pd.concat([order.iloc[i, 0:20].reset_index(drop=True), inventory.iloc[i, 0:20].reset_index(drop=True),
+                           shipment.iloc[i, 0:20].reset_index(drop=True), demand.iloc[i, 0:20].reset_index(drop=True),
+                           backlog.iloc[i, 0:20].reset_index(drop=True),
+                           pd.Series(np.repeat(order.iloc[i, 21], 20))], axis=1,
+                          keys=['order', 'inventory', 'shipment', 'demand', 'backlog', 'player_id']),
+                ignore_index=True)
 
     models = np.empty(shape=(0, 4), dtype=float)
 
