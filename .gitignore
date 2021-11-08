@@ -115,7 +115,9 @@ dmypy.json
 
 # data files
 *.zip
+*.npz
 *.csv
+*.xlsx
 datasets/
 models
 tmp/
