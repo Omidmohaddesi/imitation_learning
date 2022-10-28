@@ -2,7 +2,7 @@
 
 This repository contains the code for the CHI 2020 Extended Abstract paper [Learning from Gamettes: Imitating Human Behavior in Supply Chain Decisions](https://dl.acm.org/doi/abs/10.1145/3334480.3382996) for imitating the behavior of [Gamette](https://dl.acm.org/doi/abs/10.1145/3313831.3376571) players in supply chain decisions. The code compares the performance of a nonlinear regression model with [Behavioral Cloning](http://www.cse.unsw.edu.au/~claude/papers/MI15.pdf) and [Generative Adversarial Imitation Learning (GAIL)](https://proceedings.neurips.cc/paper/2016/file/cc7e2b878868cbae992d1fb743995d8f-Paper.pdf).  
 
-The code uses gameplay trajectories and decisions of human players who interacted with the [CRISP](https://gitlab.com/syifan/crisp) simulation through a Gamette environment. For the imitation learning task, the repository relies on a partially observable environment called *gym-crisp* which I developed using [OpenAI's Gym](https://gym.openai.com/) toolkit. 
+The code uses gameplay trajectories and decisions of human players who interacted with the [CRISP](https://gitlab.com/syifan/crisp) simulation through a Gamette environment. For the imitation learning task, the repository relies on a partially observable environment called *gym-crisp* which I developed using [OpenAI's Gym](https://www.gymlibrary.dev/) toolkit. 
 
 ## Dependencies
 
